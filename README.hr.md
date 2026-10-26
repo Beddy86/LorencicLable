@@ -4,7 +4,7 @@
 
 [![Seite veröffentlichen](https://github.com/Beddy86/LorencicLable/actions/workflows/veroeffentlichen.yml/badge.svg)](https://github.com/Beddy86/LorencicLable/actions/workflows/veroeffentlichen.yml)
 
-**Uživo:** https://beddy86.github.io/lorenciclable/  ·  otvorite na mobitelu i odaberite „Dodaj na početni zaslon"
+**Uživo:** https://beddy86.github.io/LorencicLable/  ·  otvorite na mobitelu i odaberite „Dodaj na početni zaslon"
 
 Veće skladišne etikete za inventuru i police, umjesto malih SAP etiketa: fotografija proizvoda, veliki broj artikla, Code 128 barkod broja materijala, opis, a po želji i skladišno mjesto i stranica kataloga. Etikete se izrađuju kao PDF.
 
@@ -159,7 +159,7 @@ Skripti treba samo Python 3, bez dodatnih paketa. Piše `liste.json` i dopunjuje
 
 ## Automatska objava (GitHub Pages)
 
-Stranica je na **https://beddy86.github.io/lorenciclable/**. Workflow `.github/workflows/veroeffentlichen.yml` ponovno je izrađuje pri svakom pushu na `main`: uzima `index.html` s ikonama, osnovni skup u `fotos/`, zatim `data/preisliste_artikel.csv` i `data/bilder/`, i objavljuje rezultat.
+Stranica je na **https://beddy86.github.io/LorencicLable/**. Workflow `.github/workflows/veroeffentlichen.yml` ponovno je izrađuje pri svakom pushu na `main`: uzima `index.html` s ikonama, osnovni skup u `fotos/`, zatim `data/preisliste_artikel.csv` i `data/bilder/`, i objavljuje rezultat.
 
 **Postavljanje jednom**
 

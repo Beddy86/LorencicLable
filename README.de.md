@@ -4,7 +4,7 @@
 
 [![Seite veröffentlichen](https://github.com/Beddy86/LorencicLable/actions/workflows/veroeffentlichen.yml/badge.svg)](https://github.com/Beddy86/LorencicLable/actions/workflows/veroeffentlichen.yml)
 
-**Live:** https://beddy86.github.io/lorenciclable/  ·  am Handy öffnen und „Zum Home-Bildschirm hinzufügen"
+**Live:** https://beddy86.github.io/LorencicLable/  ·  am Handy öffnen und „Zum Home-Bildschirm hinzufügen"
 
 Größere Lageretiketten für Inventur und Regal, statt der kleinen SAP-Etiketten: Produktfoto, Artikelnummer groß, Barcode (Code 128) der Materialnummer, Bezeichnung, optional Lagerplatz und Katalogseite. Die Etiketten kommen als PDF heraus.
 
@@ -157,7 +157,7 @@ Das Skript braucht nur Python 3, keine zusätzlichen Pakete. Es schreibt `liste.
 
 ## Automatisch veröffentlichen (GitHub Pages)
 
-Die Seite liegt unter **https://beddy86.github.io/lorenciclable/**. Der Workflow `.github/workflows/veroeffentlichen.yml` baut sie bei jedem Push auf `main` neu: Er nimmt `index.html` mit Icons, den Grundbestand in `fotos/`, dann `data/preisliste_artikel.csv` und `data/bilder/`, und veröffentlicht das Ergebnis.
+Die Seite liegt unter **https://beddy86.github.io/LorencicLable/**. Der Workflow `.github/workflows/veroeffentlichen.yml` baut sie bei jedem Push auf `main` neu: Er nimmt `index.html` mit Icons, den Grundbestand in `fotos/`, dann `data/preisliste_artikel.csv` und `data/bilder/`, und veröffentlicht das Ergebnis.
 
 **Einmalig einrichten**
 
