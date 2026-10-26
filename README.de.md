@@ -245,4 +245,4 @@ desktop/                           Windows-Programm
 
 ## Lizenz
 
-Noch nicht festgelegt. Bitte vor der Veröffentlichung eine Lizenz ergänzen (`LICENSE`).
+Alle Rechte vorbehalten, siehe [LICENSE](LICENSE). Die Seite darf benutzt werden. Kopieren, Ändern und Weitergeben des Codes und der Daten ist ohne schriftliche Zustimmung nicht erlaubt. Artikelliste und Katalogfotos stammen von lorencic.at.

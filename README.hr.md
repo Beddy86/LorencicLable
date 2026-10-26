@@ -247,4 +247,4 @@ desktop/                           Windows program
 
 ## Licenca
 
-Još nije određena. Prije objave dodajte licencu (`LICENSE`).
+Sva prava pridržana, vidi [LICENSE](LICENSE). Stranica se smije koristiti. Kopiranje, mijenjanje i dijeljenje koda i podataka nije dopušteno bez pisanog odobrenja. Popis artikala i fotografije iz kataloga potječu s lorencic.at.

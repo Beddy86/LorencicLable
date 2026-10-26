@@ -247,4 +247,4 @@ desktop/                           Windows program
 
 ## License
 
-Not yet defined. Please add a license (`LICENSE`) before publishing.
+All rights reserved, see [LICENSE](LICENSE). The page may be used. Copying, modifying and distributing the code and the data is not allowed without written permission. The article list and catalogue photos come from lorencic.at.
