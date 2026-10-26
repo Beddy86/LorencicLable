@@ -2,9 +2,9 @@
 
 [Deutsch](README.de.md) · **English** · [Hrvatski](README.hr.md) · [Overview](README.md)
 
-[![Seite veröffentlichen](https://github.com/Beddy86/LorencicLable/actions/workflows/veroeffentlichen.yml/badge.svg)](https://github.com/Beddy86/LorencicLable/actions/workflows/veroeffentlichen.yml)
+[![Seite veröffentlichen](https://github.com/Beddy86/LorencicLabel/actions/workflows/veroeffentlichen.yml/badge.svg)](https://github.com/Beddy86/LorencicLabel/actions/workflows/veroeffentlichen.yml)
 
-**Live:** https://beddy86.github.io/LorencicLable/  ·  open on the phone and choose "Add to Home Screen"
+**Live:** https://beddy86.github.io/LorencicLabel/  ·  open on the phone and choose "Add to Home Screen"
 
 Larger warehouse labels for stocktaking and shelves, instead of the small SAP labels: product photo, large article number, Code 128 barcode of the material number, description, and optionally storage bin and catalogue page. The labels come out as a PDF.
 
@@ -159,7 +159,7 @@ The script needs only Python 3, no extra packages. It writes `liste.json` and ad
 
 ## Publishing automatically (GitHub Pages)
 
-The page lives at **https://beddy86.github.io/LorencicLable/**. The workflow `.github/workflows/veroeffentlichen.yml` rebuilds it on every push to `main`: it takes `index.html` with icons, the base set in `fotos/`, then `data/preisliste_artikel.csv` and `data/bilder/`, and publishes the result.
+The page lives at **https://beddy86.github.io/LorencicLabel/**. The workflow `.github/workflows/veroeffentlichen.yml` rebuilds it on every push to `main`: it takes `index.html` with icons, the base set in `fotos/`, then `data/preisliste_artikel.csv` and `data/bilder/`, and publishes the result.
 
 **Set up once**
 
