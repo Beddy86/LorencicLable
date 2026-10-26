@@ -1,0 +1,60 @@
+# Baut die Etiketten-Seite und veröffentlicht sie über GitHub Pages.
+# Builds the label page and publishes it via GitHub Pages.
+# Izrađuje stranicu za etikete i objavljuje je preko GitHub Pages.
+#
+# Einmalig: Settings > Pages > Source = "GitHub Actions".
+# Danach genügt ein Push: neue Artikel in data/preisliste_artikel.csv, neue Fotos in data/bilder/.
+name: Seite veröffentlichen
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "*.md"
+      - "data/bilder/README.md"
+      - "desktop/**"
+      - ".gitignore"
+  workflow_dispatch:          # auch von Hand startbar (Actions > Run workflow)
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Seite zusammenbauen
+        run: |
+          mkdir -p _site
+          cp index.html manifest.json *.png liste.json _site/
+          cp -r fotos _site/fotos
+          python3 tools/build_web_data.py data/preisliste_artikel.csv --bilder data/bilder --out _site
+
+      - name: Prüfen
+        run: |
+          for f in index.html manifest.json liste.json fotos/index.json; do test -s "_site/$f" || { echo "fehlt: $f"; exit 1; }; done
+          python3 -c "import json; l=json.load(open('_site/liste.json')); assert len(l) > 1000, len(l)"
+          du -sh _site
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

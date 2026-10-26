@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+desktop/ausgabe/
+desktop/bilder/
+desktop/bild_cache.json
+desktop/ohne_bild.csv
+.DS_Store
