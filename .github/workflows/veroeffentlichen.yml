@@ -2,7 +2,7 @@
 # Builds the label page and publishes it via GitHub Pages.
 # Izrađuje stranicu za etikete i objavljuje je preko GitHub Pages.
 #
-# Einmalig: Settings > Pages > Source = "GitHub Actions".
+# Einmalig: Settings > Pages > Source = "GitHub Actions" (Repo: LorencicLabel).
 # Danach genügt ein Push: neue Artikel in data/preisliste_artikel.csv, neue Fotos in data/bilder/.
 name: Seite veröffentlichen
 
