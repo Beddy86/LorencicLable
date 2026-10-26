@@ -1,8 +1,8 @@
 # Lageretiketten · Warehouse Labels · Skladišne etikete
 
-[![Seite veröffentlichen](https://github.com/Beddy86/LorencicLabel/actions/workflows/veroeffentlichen.yml/badge.svg)](https://github.com/Beddy86/LorencicLabel/actions/workflows/veroeffentlichen.yml)
+[![Seite veröffentlichen](https://github.com/Beddy86/LorencicLable/actions/workflows/veroeffentlichen.yml/badge.svg)](https://github.com/Beddy86/LorencicLable/actions/workflows/veroeffentlichen.yml)
 
-**Live: https://beddy86.github.io/LorencicLabel/**
+**Live: https://beddy86.github.io/LorencicLable/**
 
 **Deutsch** · [English](README.en.md) · [Hrvatski](README.hr.md)
 
