@@ -1153,6 +1153,7 @@ Z1050H;Betonsilo 1011H.8, 500l konisch mit Handrad;E05;0162;ST;M13-11
 Z105431500;Ladegabel 1054.3, 1500kg schwere Ausführung;E05;0160;ST;M13-13
 Z10571;Zwangsmischer DIEM DZ 180V fahrbar 400V/7,5kW Inhalt 295l Mischmenge 180l 426kg;D07;0012;ST;M02-6
 Z105793;Ein-/Ausschalter für Heißluftturbine MASTER B 35/70/100/150 CEL;H27;3300;ST;-
+Z10582;Hülse lang 12 / 8 x 25,5mm für Kesselentlüftung BMS WORKER N° 1, SIGMA, ALPHA;B24;3030;ST;-
 Z1060000;Betonsilo 1011.10, 750l konisch mit Hebel;E05;0162;ST;M13-11
 Z1060000H;Betonsilo 1011H.10, 750l konisch mit Handrad;E05;0162;ST;M13-11
 Z1060055;Kartuschenpresse PS395 für 310ml Kartusche und 300/400/600ml Beutel VPE12;P13;7355;ST;10-9
@@ -1395,6 +1396,7 @@ Z11551HQ-LO;Stator LORENCIC LO-PIN D 6-3 orange mit Verdrehsicherung, wartungsfr
 Z115523;Manometer 0-350bar für ST MAX/ULTRA MAX II, CLASSIC PC, MARK V/VII/X;G23;3003;ST;-
 Z115524;Dichtung RAC 5;G23;3003;ST;-
 Z11560;Relaisblock für Steuerung BMS WORKER N° 1, ALPHA Z3;B24;3030;ST;-
+Z115605;Führungsplatte für Bindemaschine TJEP ULTRA GRIP 40;K23;3200;ST;-
 Z1161;Stator D3-4 schwarz, Strukturputz, PFT;P06;2000;ST;-
 Z116167;Potentiometerknopf für APX, T-MAX 506/657/6912, ULTRA MAX, MARK V, LINELAZER;G23;3003;ST;-
 Z1162;Stator R7-1,5 ocker PFT;P06;2000;ST;-
@@ -1540,6 +1542,8 @@ Z124299M;Fleecejacke KÜBLER WEATHER schwarz 245 g/m² Gr. M;K27;8009;ST;05-22
 Z124299S;Fleecejacke KÜBLER WEATHER schwarz 245 g/m² Gr. S;K27;8009;ST;05-22
 Z124299XL;Fleecejacke KÜBLER WEATHER schwarz 245 g/m² Gr. XL;K27;8009;ST;05-22
 Z124299XS;Fleecejacke KÜBLER WEATHER schwarz 245 g/m² Gr. XS;K27;8009;ST;05-22
+Z124605;Drahtführung für Bindemaschine TJEP ULTRA GRIP 40;K23;3200;ST;-
+Z124606;Messer für Bindemaschine TJEP ULTRA GRIP 40;K23;3200;ST;-
 Z12472181300;Wasserschlauch-Impulsspritze REHAU verstellbar;H14;4351;ST;03-9
 Z12477141300;Universal-Hahnanschluss REHAU 14-17mm VPE10;H14;4340;ST;03-6
 Z124906;Sprossen-Doppelleiter Alu KRAUSE® STABILO® 2x6 Sprossen 1,80m, AH= 3,05m, Gew. 6,3kg;K03;7551;ST;06-8
@@ -3148,6 +3152,7 @@ Z2711020353;Mobilzaunelement F2 2000x3472mm (M400), Verbindungshaken bzw. -schla
 Z27110203540;Mobilzaunelement 2000x3472mm (M300) mit Verbindungsschelle;H19;4050;ST;08-1
 Z27130;Reibebrett mit Blechauflage 270x130mm ohne Lochungen VPE1;H14;7502;ST;01-9
 Z271302;Lattenpfahl gebogen Stahl 1400mm 2 Lattenhalter geschlossen;R15;4053;ST;08-5
+Z271400;Schnurnagel Stahl 1400mm, d=14mm, Spitze gehärtet, lackiert, VPE10;R15;7511;ST;-
 Z271502;Lattenpfahl gerade Stahl 1500mm 2 Lattenhalter geschlossen;R15;4053;ST;08-5
 Z271581;=§= Epoxidmörtel 2K, Estrichverdübelung EV 15 1kg/Dose VPE6;M13;7050;DOS;11-6
 Z27233-301;Farbwalze RotaGold 12mm Flor, 25cm, Kern48, ungepolstert VPE12;C10;7601;ST;01-19
@@ -3157,6 +3162,7 @@ Z27310250;Drehgelenk Mobilzaun;H19;4050;ST;08-2
 Z2731075;Stahlstrebe d=42mm für Mobilzaun;H19;4050;ST;-
 Z2731080;Erdnagel für Stahlstrebe;H19;4050;ST;-
 Z274001;Absperrlatte Holz rot-weiß, Abmessung 150x25mm, Länge 4m;P40;4053;ST;08-5
+Z275513;Murfor COMPACT I-100 rot, 10cm breit, 30lfm/Rolle, 3Roll/Kart, 36Kart/Pal;B11;5021;ROL;-
 Z27700;Berliner Maurerhammer PICARD 600g;H14;7504;ST;01-37
 Z277018;Leistungsschütz DILM17-10 (RDC24);I01;3004;ST;-
 Z277128;Leistungsschütz DILM25-10 42V50Hz, 48V60Hz;I01;3004;ST;-
@@ -3238,6 +3244,7 @@ Z300040003;PE-Trittschall-Dampfsperre STEINOPHON® 300, 1,25x40m, 3mm,Sd>100 gra
 Z3000550;PE-Randstreifen Standard RSS 300/05/50, 50lfm/Rll, 4Rll/Sack;S44;5160;ROL;11-1
 Z3000C;VWS-Gewebe 3000 50m²/Rll, 145g/m², weiß, 5x5mm, gepr. ETAG 004 30Roll/Pal;N12;5002;ROL;-
 Z3000LO;WDVS-Gewebe System 50m²/Rolle 145g/m² 4x4mm 30Roll/Pal;S09;5002;ROL;14-5
+Z3000NN;WDVS-Gewebe 50m²/Rolle 145g/m² 4x4mm, weiß mit Streifenaufdruck RAL7016,  33Roll/Pal;K01;5002;ROL;-
 Z3000OR;WDVS-Gewebe 3000 orange 50m²/Rolle 145g/m² 4x4mm 30Roll/Pal;S09;5002;ROL;14-5
 Z3000X;WDVS-Gewebe 50m²/Rll, 145g/m², weiß, 5x5mm, ETA 18/0372, 30Roll/Pal;B50;5002;ROL;-
 Z3001025;PE-Randstreifen Standard RSS 300/10/25, 25lfm/Rll, 4Rll/Sack;S44;5160;ROL;11-1
@@ -4024,6 +4031,8 @@ Z3795250LO;Putz/Schutzleiste 10mm,DL,flex. Abriss, 2,5lfm/Sta 60Sta/Kart 42Kart/
 Z37952601LO;Putz/Schutzleiste 10mm,DL,starr. Abriss, 2,6lfm/Sta 60Sta/Kart 30Kart/Pal;K01;5108;STA;-
 Z3795260LO;Putz/Schutzleiste 10mm,DL,flex. Abriss, 2,6lfm/Sta 60Sta/Kart 30Kart/Pal;K01;5108;STA;13-6
 Z37963-301;Farbwalze RotaStreif 21mm Flor, 27cm, Kern44, stark gepolstert VPE10;C10;7601;ST;01-19
+Z3797140ALO;Putz/Schutzleiste 6mm, anthrazit, mit Gewebe, DL, 1,4lfm/Sta 30Sta/Kart 40Kart/Pal;K01;5137;STA;-
+Z3797250ALO;Putz/Schutzleiste 6mm, anthrazit, mit Gewebe, DL, 2,5lfm/Sta 60Sta/Kart 21Kart/Pal;K01;5137;STA;-
 Z3797250LO;Putz/Schutzleiste 6mm,mit Gewebe,DL, 2,5lfm/Sta 60Sta/Kart 21Kart/Pal;K36;5137;STA;13-8
 Z3798140LO;Putz/Schutzleiste 10mm,mit Gewebe,DL, 1,4lfm/Sta 60Sta/Kart 21Kart/Pal;K01;5137;STA;13-8
 Z3798250LO;Putz/Schutzleiste 10mm,mit Gewebe,DL, 2,5lfm/Sta 60Sta/Kart 21Kart/Pal;K36;5137;STA;13-8
@@ -4587,6 +4596,7 @@ Z42420031;Saugplatte QJ-ESP-170-90/25 für QUICKJET QJ-600-E PROBST;P18;2109;ST;
 Z42450;Schutzanzug YES Polypropylen Gr. L VPE10;S14;8002;ST;05-2
 Z42451;Schutzanzug YES Polypropylen Gr. XL VPE10;S14;8002;ST;05-2
 Z42452;Schutzanzug YES Polypropylen Gr. XXL VPE10;S14;8002;ST;05-2
+Z4250;Kombi-Finish-Blatt-Set für Flügelglätter 4-90/Doppelflügelglätter OL90, 4Stk/Garn.;B39;2040;GAR;-
 Z4251;Anbaugerätestecker CEE 5x32A 6h rot Nr. 391 PFT 2171+2215;P06;3004;ST;-
 Z4252;Anbaugerätestecker CEE 5x16A 6h rot Nr. 379 PFT;P06;3004;ST;-
 Z4253;Anbaugerätestecker CEE 7x16A 6h rot PFT;P06;3004;ST;-
@@ -4693,7 +4703,7 @@ Z437300250;Aufsteckprofil PVC 37300 weiß, 2,5lfm/Sta 15Sta/Kart, 24Kart/Pal;P16
 Z437322305;Kantenprofil MID-FLEX 300 Innen-/Außeneck 30,50lfm/Roll, 10Roll/Kart, 24Kart/Pal;P16;5109;ROL;13-23
 Z437376;Diamantsägeblatt TS C1W 1000x4,8x55/60mm, Sh 10mm, XB-T TYROLIT;T11;2100;ST;02-7
 Z437401250;Aufsteckprofil PVC 37401 WDVS Mineral, Putzd. 10mm, weiß, 2,5lfm/Sta 15Sta/Kart 40Kart/Pal;P16;5135;M;-
-Z43741250;Einfassprofil PVC 3741 12,5mm 2,5lfm/Sta, 50Sta/Bd, 42Bd/Pal;P16;5109;M;13-22
+Z43741250;Einfassprofil PVC 3741 12,5mm 2,5lfm/Sta, 50Sta/Bd, 36Bd/Pal;P16;5109;M;13-22
 Z43741300;Einfassprofil PVC 3741 12,5mm 3,0lfm/Sta, 50Sta/Bd, 36Bd/Pal;P16;5109;M;13-22
 Z437428250;Einschubprofil 37428 an Rollladenkasten m. Gewebe 2,50lfm/Sta 25Sta/Kart 13Kart/Pal;P16;5136;STA;13-19
 Z43747250;Einfassprofil PVC 3747 15,0mm 2,5lfm/Sta, 50Sta/Kart, 36Kart/Pal;P16;5109;M;13-22
@@ -5111,7 +5121,7 @@ Z490604;Sockeltrogprofil WDVS Alu 40mm 90604 (9144) 2,50lfm/Sta, 10Sta/Bd, 96Bd/
 Z490605;Sockeltrogprofil WDVS Alu 50mm 90605 (9145) 2,50lfm/Sta, 10Sta/Bd, 90Bd/Pal;P16;5135;M;13-20
 Z490605X;Sockeltrogprofil WDVS Alu 50mm 2,50lfm/Sta;S45;5135;M;13-20
 Z490606;Sockeltrogprofil WDVS Alu 60mm 90606 (9146) 2,50lfm/Sta, 10Sta/Bd, 91Bd/Pal;P16;5135;M;-
-Z490608;Sockeltrogprofil WDVS Alu 80mm 90608 (9148) 2,50lfm/Sta, 10Sta/Bd, 66Bd/Pal;P16;5135;M;13-20
+Z490608;Sockeltrogprofil WDVS Alu 80mm 90608 (9148) 2,50lfm/Sta, 10Sta/Bd, 77Bd/Pal;P16;5135;M;13-20
 Z490608X;Sockeltrogprofil WDVS Alu 80mm 2,50lfm/Sta;S45;5135;M;13-20
 Z490810;Sockeltrogprofil WDVS Alu 100mm 90810 (9150) 2,50lfm/Sta, 10Sta/Bd, 54Bd/Pal;P16;5135;M;-
 Z490810X;Sockeltrogprofil WDVS Alu 100mm 2,50lfm/Sta;S45;5135;M;13-20
@@ -5127,8 +5137,8 @@ Z490820X;Sockeltrogprofil WDVS Alu 200mm 2,50lfm/Sta;S45;5135;M;05-12
 Z4911;Nagelschuh;K14;7571;PAA;-
 Z49110250;Putzabschlussprofil 9110 Innenputz 2,5lfm/Sta,25Sta/Bd,120Bd/Pal,Aluminium blank;P16;5102;M;-
 Z49135250;Putzabschlussprofil 9135 Innenputz 10mm 2,5lfm/Sta, 20Sta/Bd,150Bd/Pal,Aluminium;P16;5102;M;-
-Z49136250;Putzabschlussprofil 9136 Innenputz 2,5lfm/Sta,25Sta/Bd,144Bd/Pal,Aluminium blank;P16;5102;M;-
-Z49136300;Putzabschlussprofil 9136 Innenputz 3,0lfm/Sta,25Sta/Bd,144Bd/Pal,Aluminium blank;P16;5102;M;-
+Z49136250;Putzabschlussprofil 9136 Innenputz 2,5lfm/Sta,25Sta/Bd,216Bd/Pal,Aluminium blank;P16;5102;M;-
+Z49136300;Putzabschlussprofil 9136 Innenputz 3,0lfm/Sta,25Sta/Bd,216Bd/Pal,Aluminium blank;P16;5102;M;-
 Z49179300;Alu-Eckwinkel 90° 45x45mm 3,0lfm 25Sta/Bd 108Bd/Pal;P16;5109;BUN;13-21
 Z49224250;Dachbelüftungsprofil 9224 13mm 2,50lfm/Sta 20Sta/Bd 70Bd/Pal;P16;5136;M;13-19
 Z493;Schwammscheibe ROKAMAT grob d=350mm mit Klett für Grundteller Nr. Z480;R12;2220;ST;-
@@ -5624,6 +5634,10 @@ Z54055;"Ersatzschneidedraht ""Holzfaser"" für ROKAMAT TIGRIS 1250 CX";R12;2222;
 Z5406;Schruppscheibe gekr. 27E 230x4x22,23mm A30Q-BFX TYROLIT;T11;2208;ST;-
 Z5406007060;Innenring 60x70x60 EB;P17;3030;ST;-
 Z540727;Rüttler MVE202DC 12V 3000rpm;P17;3030;ST;-
+Z540869501;Diamantschleifscheibe ELITE-GRIND DISC S blau 250mm für Schleifmaschine BGS/BG 250;H07;2040;ST;-
+Z540869601;Diamantschleifscheibe ELITE-GRIND DISC M grün 250mm für Schleifmaschine BGS/BG 250;H07;2040;ST;-
+Z540869701;Diamantschleifscheibe ELITE-GRIND DISC H rot 250mm für Schleifmaschine BGS/BG 250;H07;2040;ST;-
+Z540870001;Diamantschleifscheibe VARI-GRIND DISC H rot 250mm für Schleifmaschine BGS/BG 250;H07;2040;ST;-
 Z5412298089417;Mobilzaunelement F2 2000x2200mm (M400);H19;4050;ST;08-1
 Z5412298109337;Mobilzaun Torelement F2 2000x1200mm;H19;4050;ST;08-1
 Z54146G;Arbeitsbluse weiß 240 g Gr. 46;G26;8000;ST;05-20
@@ -6492,6 +6506,7 @@ Z709213;Handschuh DRIVER Rindsvollleder, ca. 1,1mm, EN388+407, Gr. 8, VPE12/120;
 Z709214;Handschuh DRIVER Rindsvollleder, ca. 1,1mm, EN388+407, Gr. 9, VPE12/120;G30;8003;PAA;-
 Z709215;Handschuh DRIVER Rindsvollleder, ca. 1,1mm, EN388+407, Gr. 10, VPE12/120;G30;8003;PAA;-
 Z709216;Handschuh DRIVER Rindsvollleder, ca. 1,1mm, EN388+407, Gr. 11, VPE12/120;G30;8003;PAA;-
+Z709241;Montagehandschuh NANO FLEX, weiß, nahtlos, EN388, Gr. 7, VPE12/120;G30;8003;PAA;-
 Z709242;Montagehandschuh NANO FLEX, weiß, nahtlos, EN388, Gr. 8, VPE12/120;G30;8003;PAA;-
 Z709243;Montagehandschuh NANO FLEX, weiß, nahtlos, EN388, Gr. 9, VPE12/120;G30;8003;PAA;-
 Z709244;Montagehandschuh NANO FLEX, weiß, nahtlos, EN388, Gr. 10, VPE12/120;G30;8003;PAA;-
@@ -6544,6 +6559,7 @@ Z71001;Flächenstreicher MADURO FS 3x10cm Mixborste VPE12;S14;7600;ST;M01-8
 Z71002;Flächenstreicher MADURO FS 3x12cm Mixborste VPE12;S14;7600;ST;01-16
 Z71004;Flächenstreicher MADURO FS 4x14cm Mixborste VPE6;S14;7600;ST;01-16
 Z710050;Laser-Distanzmessgerät SPECTRA QM 20 inkl. Batterien, Gürteltasche, Handschlaufe;P19;0403;ST;M01-7
+Z710373;Stucanet EASY FIX 2.0 12cm breit, 20lfm/Rolle, 5Roll/Kart, 40Kart/Pal;B11;5021;ROL;-
 Z711502;Schleifmaschine DSM 530S, 400V/50Hz, 7,5kW,m. ETX-Aufnahmeteller, Werkzeugträger;S16;0043;ST;-
 Z71196;Schlitzputz TIROPLAN 50l/Sack 60Sack/Pal;G25;7003;SAC;-
 Z712504;Ausschalter Totmangriff für Flügelglätter SCHWAMBORN;S16;3040;ST;-
@@ -6616,6 +6632,7 @@ Z7500001070;Handfeger Polyester weiß;P17;3030;ST;-
 Z75097;Latthammer-Set mit 4Stk Latthammer PICARD 620M geraut u. 1Stk Multifunktionstuch;H14;7504;PAK;01-37
 Z752802;Universal-Diamantsägeblatt HIKOKI 125x22,2mm, grün, Qualität 1;H10;2100;ST;-
 Z7531300;Dehnfugenprofil Kombi innen 10mm 3,0lfm/Sta 10Sta/Bd 32Bd/Pal;C15;5104;M;13-14
+Z755789;Stucanet EASY FIX 1.0 GF 11cm breit, 20lfm/Rolle, 5Roll/Kart, 40Kart/Pal;B11;5021;ROL;-
 Z7561250LO;Dehnfugenprofil für WDVS mit Gewebe 2,5lfm/Sta 25Sta/Kart 20Kart/Pal;K36;5133;STA;13-19
 Z7570010185;Untergestell für Baustromverteiler AVEV 35/11-3/V1/A (außer Z690100032);P02;4207;ST;04-12
 Z757938;"Fotostativ LEICA TRI 100 leicht, 70-172cm, 1/4"" Gewinde, 2400g";P19;1402;ST;-
@@ -7079,6 +7096,7 @@ Z970603104;Schleifmaschine HUSQVARNA PG 5, 400V/50Hz/3ph, 4kW;H07;0043;ST;-
 Z970615104;Fußbodenstripper HUSQVARNA BS 110 230V/50-60Hz/1ph, 1,5kW;H07;0040;ST;-
 Z970615601;Beton- und Estrichfräse HUSQVARNA BMP 265 400V/5,5kW Elektro inkl. Trommel kpl.;H07;0042;ST;M08-1
 Z970615801;Beton- und Estrichfräse HUSQVARNA BMP 265 6kW Benzin inkl. Trommel kpl.;H07;0042;ST;M08-1
+Z970801201;Beton- und Estrichfräse HUSQVARNA CP 9 230V/1,8kW Elektro inkl. Trommel kpl.;H07;0042;ST;-
 Z970843601;Hochfrequenz-Beton-Innenrüttler HUSQVARNA SMART 40mm mit integr. Frequenzumformer 230V;H07;0061;ST;M08-1
 Z970843701;Hochfrequenz-Beton-Innenrüttler HUSQVARNA SMART 48mm mit integr. Frequenzumformer 230V;H07;0061;ST;-
 Z970843801;Hochfrequenz-Beton-Innenrüttler HUSQVARNA SMART 56mm mit integr. Frequenzumformer 230V;H07;0061;ST;-
@@ -7453,6 +7471,7 @@ ZDLO35200;Drunterleiste voll 35mm 2,0lfm/Stk, 60lfm/Bund, 66Bund/Pal;N07;5301;BU
 ZDLO40200;Drunterleiste voll 40mm 2,0lfm/Stk, 60lfm/Bund, 40Bund/Pal;N07;5301;BUN;09-4
 ZDLO50200;Drunterleiste voll 50mm 2,0lfm/Stk, 60lfm/Bund, 28Bund/Pal;N07;5301;BUN;09-4
 ZDM100AT;Bauwinde IORI DM100AT 100kg Tragkraft Seillänge 40x2m;I07;0150;ST;-
+ZDM200APONT-V;Bauwinde IORI DM200APONT VELOX 230V 200kg Tragkraft Seillänge 25x2m;I07;0150;ST;-
 ZDM200ITLTT;Bauwinde IORI DM200ITLTT 230V 200kg Tragkraft Seillänge 50x2m;I07;0150;ST;M13-1
 ZDM200ITT;Bauwinde IORI DM200ITT 230V 200kg Tragkraft Seillänge 25x2m;I07;0150;ST;M13-1
 ZDM200IV;Schwenkarmaufzug IORI DM200I VELOX 230V 200kg Tragkraft 40m Seillänge;I07;0150;ST;M13-2
@@ -7461,6 +7480,7 @@ ZDM280;Dämmstoffmesser 280mm RF, Edelstahlklinge, doppelschneidig, VPE10;H14;75
 ZDM300E;Hebeaufzug IORI DM300E 230V 300kg Tragkraft 25m Seillänge;I07;0150;ST;M13-1
 ZDM300MAX;Hebeaufzug IORI DM300 230V 300kg Tragkraft 25m Seillänge;I07;0150;ST;M13-1
 ZDM500MAX;Hebeaufzug IORI DM500 230V 500kg Tragkraft 25m Seillänge;I07;0150;ST;M13-1
+ZDM500MAX-2;Hebeaufzug IORI DM500 230V 500kg Tragkraft 40m Seillänge;I07;0150;ST;-
 ZDPF15200;Abstandhalter DRUPAK 1 15mm PVC-frei 2lfm/Stk, gesteckt, 100lfm/Bund, 60Bd/Pal;N07;5301;BUN;09-4
 ZDPF20200;Abstandhalter DRUPAK 1 20mm PVC-frei 2lfm/Stk, gesteckt, 100lfm/Bund, 60Bd/Pal;N07;5301;BUN;09-4
 ZDPF25200;Abstandhalter DRUPAK 1 25mm PVC-frei 2lfm/Stk, gesteckt, 100lfm/Bund, 54Bd/Pal;N07;5301;BUN;09-4
@@ -7509,6 +7529,7 @@ ZDT4875-QZ;Schalungsbohrer DEWALT® 18x600mm;D05;2200;ST;M06-16
 ZDT4876-QZ;Schalungsbohrer DEWALT® 20x600mm;D05;2200;ST;M06-16
 ZDT4877-QZ;Schalungsbohrer DEWALT® 22x600mm;D05;2200;ST;M06-16
 ZDT500MAX;Hebeaufzug IORI DT500 400V 500kg Tragkraft 25m Seillänge;I07;0150;ST;M13-1
+ZDT500MAX-3;Hebeaufzug IORI DT500 400V 500kg Tragkraft 50m Seillänge;I07;0150;ST;-
 ZDT5923-QZ;Spiralbohrer-Set DEWALT® HSS-G 1-10mm 19-tlg.;D05;2200;ST;M06-15
 ZDT60330-QZ;Spitz- und Flachmeißel-SET DEWALT® SDS-Plus 3tlg.;D05;2202;ST;M06-16
 ZDT60801-QZ1;Hammerbohrer ELITE DEWALT® SDS-Max 12x540x400mm, 2-Schneider;D05;2200;ST;M06-15
@@ -8640,6 +8661,7 @@ ZSAO58180;Ölabscheider Separator SAO58180 11343 für BMS ALPHA Z3;S06;3988;ST;-
 ZSAO58710;Ölabscheider SAO58710, 1619624800;S06;3988;ST;-
 ZSAO59020;Ölabscheider SAO59020 1937 XAS55, XAS65, XAS75 2911001400;S06;3988;ST;-
 ZSB500X;Steinbandsäge PROFOX® 500 DS 1,85kW 400V inkl. HM-Bandsägeblatt;A31;0100;ST;-
+ZSBK22GB;Sichtbetonkegel d=38mm für Konus K22 mit Einbaulänge 10mm, 250Stk/Kart 32Kart/Pal;N07;5301;ST;-
 ZSC30002X2SZ1;Schnellbaucontainer SC3000+ 2x2m (stirnseitig zweiflügelige Türe) auf der 2m Seite;B48;4008;ST;06-5
 ZSC30003X2SZ1;Schnellbaucontainer SC3000+ 3x2m (stirnseitig zweiflügelige Türe) auf der 2m Seite;B48;4008;ST;06-5
 ZSC30004X2SZ1;Schnellbaucontainer SC3000+ 4x2m (stirnseitig zweiflügelige Türe) auf der 2m Seite;B48;4008;ST;06-5
