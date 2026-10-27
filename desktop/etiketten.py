@@ -445,23 +445,34 @@ def draw_sammel_page(c, group, img_path, W, H, page_no, pages, rows_here, first_
     row_h = min(24 * mm, (y_top - M) / max(rows_here, 1))
     c.setStrokeColorRGB(0.6, 0.6, 0.6)
     c.setLineWidth(0.4)
+    def kuerzen(t, font, size, max_w):
+        if stringWidth(t, font, size) <= max_w:
+            return t
+        while len(t) > 1 and stringWidth(t + "...", font, size) > max_w:
+            t = t[:-1]
+        return t.rstrip() + "..."
+
+    gap = 6 * mm
     for k in range(rows_here):
         i = first_row + k
         yb = y_top - (k + 1) * row_h
         c.line(M, yb, W - M, yb)
         mat = latin(mats[i])
-        c.setFillColorRGB(0, 0, 0)
-        ns = fit_font(mat, "Helvetica-Bold", 20, inner * 0.46, min_size=10)
-        c.setFont("Helvetica-Bold", ns)
-        c.drawString(M, yb + row_h / 2 + 1.5 * mm, mat)
-        if diffs[i]:
-            c.setFont("Helvetica", 12)
-            c.drawString(M, yb + row_h / 2 - 5 * mm, latin(diffs[i])[:60])
+        links = k % 2 == 1                    # jede zweite Zeile: Barcode links, Text rechtsbündig
         bh = row_h * 0.62
         probe = Code128(mat, barWidth=1, barHeight=bh, quiet=False)
         bwm = min(inner * 0.5 / probe.width, 1.0 * mm)
         bc = Code128(mat, barWidth=bwm, barHeight=bh, quiet=False)
-        bc.drawOn(c, W - M - bc.width, yb + (row_h - bh) / 2)
+        avail = inner - bc.width - gap        # so viel Platz bleibt neben dem Barcode für den Text
+        bc.drawOn(c, M if links else W - M - bc.width, yb + (row_h - bh) / 2)
+        c.setFillColorRGB(0, 0, 0)
+        ns = fit_font(mat, "Helvetica-Bold", 20, avail, min_size=10)
+        c.setFont("Helvetica-Bold", ns)
+        put = (lambda t, y: c.drawRightString(W - M, y, t)) if links else (lambda t, y: c.drawString(M, y, t))
+        put(kuerzen(mat, "Helvetica-Bold", ns, avail), yb + row_h / 2 + 1.5 * mm)
+        if diffs[i]:
+            c.setFont("Helvetica", 10)
+            put(kuerzen(latin(diffs[i]), "Helvetica", 10, avail), yb + row_h / 2 - 5 * mm)
 
 
 def build_sammel_pdf(groups, images, out, rahmen=True):

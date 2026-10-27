@@ -527,17 +527,27 @@ function drawSammelPage(cv, group, im, W, H, pageNo, pages, rowsHere, firstRow, 
   const yTop = top - headH - 6 * MM;
   const rowH = Math.min(24 * MM, (yTop - M) / Math.max(rowsHere, 1));
   cv.stroke(0.6, 0.4);
+  const kuerzen = (t, fn, size, maxW) => {
+    if (cv.sw(t, fn, size) <= maxW) return t;
+    while (t.length > 1 && cv.sw(t + '...', fn, size) > maxW) t = t.slice(0, -1);
+    return t.trimEnd() + '...';
+  };
+  const gap = 6 * MM;
   for (let k = 0; k < rowsHere; k++) {
     const i = firstRow + k, yb = yTop - (k + 1) * rowH;
     cv.line(M, yb, W - M, yb);
     const mat = mats[i];
-    const ns = fitFont(cv, mat, 'B', 20, inner * 0.46, 10);
-    cv.ink(0); cv.font('B', ns); cv.str(mat, M, yb + rowH / 2 + 1.5 * MM);
-    if (diffs[i]) { cv.font('R', 12); cv.str(diffs[i].slice(0, 60), M, yb + rowH / 2 - 5 * MM); }
+    const links = k % 2 === 1;                    // jede zweite Zeile: Barcode links, Text rechtsbündig
     const bh = rowH * 0.62;
     const bwm = Math.min(inner * 0.5 / barcodeModules(mat), 1.0 * MM);
     const bcw = barcodeModules(mat) * bwm;
-    cv.barcode(mat, W - M - bcw, yb + (rowH - bh) / 2, bwm, bh);
+    const avail = inner - bcw - gap;              // so viel Platz bleibt neben dem Barcode für den Text
+    cv.barcode(mat, links ? M : W - M - bcw, yb + (rowH - bh) / 2, bwm, bh);
+    const tx = links ? W - M : M;
+    const put = links ? (t, y) => cv.strR(t, tx, y) : (t, y) => cv.str(t, tx, y);
+    const ns = fitFont(cv, mat, 'B', 20, avail, 10);
+    cv.ink(0); cv.font('B', ns); put(kuerzen(mat, 'B', ns, avail), yb + rowH / 2 + 1.5 * MM);
+    if (diffs[i]) { cv.font('R', 10); put(kuerzen(diffs[i], 'R', 10, avail), yb + rowH / 2 - 5 * MM); }
   }
 }
 async function baueSammel(groups, rahmen) {
