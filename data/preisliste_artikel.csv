@@ -4254,9 +4254,11 @@ Z4087002;Farbpuder NEON grün 200g in Kunststoffflasche VPE6;K07;7511;FL;01-25
 Z4087101;Farbpuder rot 360g in Kunststoffflasche VPE6;K07;7511;FL;01-25
 Z4087102;Farbpuder blau 360g in Kunststoffflasche VPE6;K07;7511;FL;01-25
 Z4087104;Farbpuder gelb 400g in Kunststoffflasche VPE6;K07;7511;FL;01-25
+Z4087105;Farbpuder weiß 400g in Kunststoffflasche VPE6;K07;7511;FL;-
 Z4087301;Farbpuder rot 1000g in Kunststoffflasche VPE6;K07;7511;FL;01-25
 Z4087302;Farbpuder blau 1000g in Kunststoffflasche VPE6;K07;7511;FL;01-25
 Z4087304;Farbpuder gelb 1000g in Kunststoffflasche VPE6;K07;7511;FL;01-25
+Z4087305;Farbpuder weiß 1000g in Kunststoffflasche VPE6;K07;7511;FL;-
 Z40881;Collomixer FM 80 S mit 6-Kant-Anschluss;C04;2221;ST;-
 Z408SF3;Fassschaufel KRENHOF geschmiedet 1,30kg mit Feder u. Stiel;O03;7509;ST;-
 Z408SP3;Fassschaufel KRENHOF geschmiedet 1,30kg mit Stiel VPE5;O03;7509;ST;01-42
@@ -6965,12 +6967,14 @@ Z9101125;Keilriemen OPTIBELT AVX 10-1125 LA;D15;3987;ST;-
 Z91059;=§= Rostschutzspray PRISMA TECH ANTI RUST rotbraun 400ml VPE6;S14;7391;ST;-
 Z91100;Schlagschnurgerät Alu mit 30m Schnur inkl. Farbpuder VPE4;H14;7511;ST;01-25
 Z91103;Schlagschnurgerät RIESE ABS 50m mit Kurbel ohne Farbpuder VPE12;H14;7511;ST;-
+Z91105;Doppel-Schlagschnurgerät DUO LONGO Kunststoff mit 30m Schnur ohne Farbpuder;H14;7511;ST;-
 Z91155;Schlagschnurgerät Kunststoff Übersetzung 5:1 mit 30m Schnur;H14;7511;ST;01-25
 Z912855;Geländerstrebe für Alu-Gerüste KRAUSE® MONTO® PROTEC®/XXL/1000;K03;4000;ST;-
 Z912879;Diagonalstrebe für Alu-Gerüste KRAUSE® MONTO® PROTEC®/XXL/XS/1000/XS 1000;K03;4000;ST;-
 Z9129000000;Antriebselement EJOT® ejotherm® STR-Tool 2GE 5Stk/Kart 30Kart/Pal;E13;5207;ST;14-12
 Z9129000004;Werkzeugaufnahme Sechskant SW 10x160 EJOT® ejotherm® für STR-Tool 2GE;E13;5207;ST;14-12
 Z9129000005;Werkzeugaufnahme SDS-Plus EJOT® ejotherm® für STR-Tool 2GE;E13;5207;ST;14-12
+Z91305;Ersatzschnur 30m auf Spule mit Haken zu Doppel-Schlagschnurgerät DUO LONGO VPE1;H14;7511;ST;-
 Z9131325;Keilriemen OPTIBELT XPA 1307 LW, AVX13-1325;D15;3987;ST;-
 Z9131375;Keilriemen OPTIBELT KR13-1375 LI A 54;D15;3987;ST;-
 Z9131650;Keilriemen OPTIBELT KR13-1650 LI A 65;D15;3987;ST;-
