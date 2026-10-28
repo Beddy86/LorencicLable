@@ -163,6 +163,12 @@
           <p class="hinweis">Excel oder CSV mit den Spalten <code>Material</code> und <code>Lagerplatz</code> (optional <code>Katalogseite</code>).</p>
           <p class="hinweis" id="platzinfo"></p>
         </div>
+        <div>
+          <span class="titel">EAN-Zuordnung für den Scanner (alte Etiketten, Verpackungs-EANs)</span>
+          <input type="file" id="eandatei" accept=".csv,.xlsx,.xls,.txt">
+          <p class="hinweis">Excel aus SE16N, Tabelle MEAN, mit den Spalten <code>Material</code> und <code>EAN/UPC-Code</code>.</p>
+          <p class="hinweis" id="eaninfo"></p>
+        </div>
       </div>
     </details>
   </section>
@@ -199,6 +205,8 @@ let FOTOIDX = {};                    // Material -> [Paket, Offset, Länge]
 const FOTOIDX_UP = new Map();        // GROSSBUCHSTABEN -> Material
 const PACKS = new Map();             // Paketnummer -> Promise<ArrayBuffer>
 const OWN = new Map();               // GROSSBUCHSTABEN -> File (eigene Fotos)
+const EANMAP = new Map();            // EAN/interne Nummer (ohne führende Nullen) -> Materialnummer
+const eanNorm = c => String(c).trim().replace(/^0+/, '');
 const PLATZMAP = new Map();          // GROSSBUCHSTABEN -> Lagerplatz (aus geladener Datei)
 const KATMAP = new Map();
 const IMGCACHE = new Map();          // key -> {url,w,h} | null
@@ -212,6 +220,7 @@ async function ladeDaten() {
     ]);
     for (const [m, t, k] of liste) LOOKUP.set(m.toUpperCase(), [m, t, k]);
     FOTOIDX = idx;
+    try { const ean = await fetch('ean.json').then(r => r.ok ? r.json() : {}); for (const [k, m] of Object.entries(ean)) EANMAP.set(k, m); } catch (e) { /* ean.json ist optional */ }
     for (const m of Object.keys(idx)) FOTOIDX_UP.set(m.toUpperCase(), m);
     $('stand').textContent = LOOKUP.size.toLocaleString('de-AT') + ' Artikel und ' + Object.keys(idx).length.toLocaleString('de-AT') + ' Katalogfotos geladen.';
     $('listeinfo').textContent = 'preisliste_artikel.csv (' + LOOKUP.size.toLocaleString('de-AT') + ' Artikel)';
@@ -779,6 +788,21 @@ $('platzdatei').onchange = async e => {
   } catch (err) { $('platzinfo').textContent = 'Datei nicht lesbar: ' + (err.message || err); }
 };
 
+$('eandatei').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const wb = XLSX.read(await f.arrayBuffer(), { type: 'array', raw: true });
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' });
+    const head = rows[0].map(h => String(h).trim().toLowerCase());
+    const col = (...n) => { for (const x of n) { const i = head.indexOf(x); if (i >= 0) return i; } return -1; };
+    const iM = col('material', 'matnr', 'materialnummer'), iE = col('ean/upc-code', 'ean11', 'ean', 'ean-code');
+    if (iM < 0 || iE < 0) throw new Error('Spalten "Material" und "EAN/UPC-Code" nicht gefunden');
+    let n = 0;
+    for (const r of rows.slice(1)) { const m = String(r[iM]).trim(), c = eanNorm(r[iE]); if (m && c) { EANMAP.set(c, m); n++; } }
+    $('eaninfo').textContent = n + ' EAN-Zuordnungen geladen (insgesamt ' + EANMAP.size + ').';
+  } catch (err) { $('eaninfo').textContent = 'Datei nicht lesbar: ' + (err.message || err); }
+};
+
 /* ------------------------------------------------------------ Barcode-Scanner (Kamera) */
 const SCAN = { stream: null, laeuft: false, detector: null, zx: null, stack: [], zaehler: new Map(), letzter: '', letzteZeit: 0, audio: null };
 function scanPiep(ok) {
@@ -799,7 +823,7 @@ function scanTreffer(code) {
   const jetzt = Date.now();
   if (code === SCAN.letzter && jetzt - SCAN.letzteZeit < 2200) { SCAN.letzteZeit = jetzt; return; }   // gleicher Code noch im Bild
   SCAN.letzter = code; SCAN.letzteZeit = jetzt;
-  const e = LOOKUP.get(code.toUpperCase());
+  const e = LOOKUP.get(code.toUpperCase()) || LOOKUP.get((EANMAP.get(eanNorm(code)) || '').toUpperCase());
   if (!e) { scanPiep(false); scanMeldung('<b>' + esc(code) + '</b><br>nicht in der Artikelliste', 'fehler'); return; }
   const sammel = $('art_typ').value === 'sammel', ta = $('art'), mat = e[0];
   if (sammel && SCAN.zaehler.has(mat)) { scanPiep(false); scanMeldung('<b>' + esc(mat) + '</b> ist in diesem Sammeletikett schon dabei', 'fehler'); return; }

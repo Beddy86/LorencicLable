@@ -45,6 +45,18 @@ with open(a.liste, newline="", encoding="utf-8-sig") as f:
 with open(os.path.join(a.out, "liste.json"), "w", encoding="utf-8") as f:
     json.dump(rows, f, ensure_ascii=False, separators=(",", ":"))
 
+# ---- EAN-Zuordnung (optional) -> ean.json  (EAN ohne führende Nullen -> Material)
+_ean = os.path.join(os.path.dirname(os.path.abspath(a.liste)), "ean.csv")
+if os.path.exists(_ean):
+    _m = {}
+    with open(_ean, encoding="utf-8-sig", newline="") as f:
+        for r in csv.reader(f, delimiter=";"):
+            if r and r[0] != "Material" and len(r) > 1 and r[1].strip().lstrip("0"):
+                _m[r[1].strip().lstrip("0")] = r[0].strip()
+    with open(os.path.join(a.out, "ean.json"), "w", encoding="utf-8") as f:
+        json.dump(_m, f, separators=(",", ":"))
+    print(f"{len(_m)} EAN-Zuordnungen -> ean.json")
+
 # ---- Fotos
 safe = lambda m: re.sub(r'[\\/:*?"<>|]', "_", m)
 bysafe = {}
