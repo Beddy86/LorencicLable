@@ -19,6 +19,28 @@
   :root[data-theme="dark"] {
     --rot:#ef4b52; --rot-text:#1a0507; --text:#ececf0; --grau:#a2a2ac; --linie:#3a3a42;
     --bg:#16161a; --karte:#202026; --feld:#2a2a31; --ok:#4cc26e; --warn:#e6a93a; --code:#2e2e36; color-scheme: dark; }
+
+  /* Barcode-Scanner */
+  .scanzeile { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+  #scanbtn { font:inherit; font-weight:600; padding:9px 14px; border-radius:8px; border:1px solid var(--rot); background:transparent; color:var(--rot); cursor:pointer; }
+  #scan { position:fixed; inset:0; z-index:50; background:#000; display:flex; flex-direction:column; color:#fff; }
+  #scan video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  #scan .rahmen { position:absolute; left:50%; top:42%; width:min(88vw,560px); height:min(34vw,200px); min-height:110px; transform:translate(-50%,-50%);
+                  border-radius:12px; box-shadow:0 0 0 100vmax rgba(0,0,0,.55); border:2px solid rgba(255,255,255,.55); }
+  #scan .rahmen i { position:absolute; width:26px; height:26px; border:4px solid #ff3b43; }
+  #scan .rahmen i:nth-child(1){left:-3px;top:-3px;border-right:0;border-bottom:0;border-top-left-radius:12px}
+  #scan .rahmen i:nth-child(2){right:-3px;top:-3px;border-left:0;border-bottom:0;border-top-right-radius:12px}
+  #scan .rahmen i:nth-child(3){left:-3px;bottom:-3px;border-right:0;border-top:0;border-bottom-left-radius:12px}
+  #scan .rahmen i:nth-child(4){right:-3px;bottom:-3px;border-left:0;border-top:0;border-bottom-right-radius:12px}
+  #scan .rahmen b { position:absolute; left:8px; right:8px; top:50%; height:2px; background:#ff3b43; box-shadow:0 0 8px #ff3b43; animation:scanlinie 1.6s ease-in-out infinite alternate; }
+  @keyframes scanlinie { from{top:12%} to{top:88%} }
+  #scan .rahmen.treffer { border-color:#3ddc84; } #scan .rahmen.fehler { border-color:#ffb020; }
+  #scan .oben { position:relative; padding:14px 16px; background:linear-gradient(#000a,#0000); font-size:15px; }
+  #scan .unten { position:absolute; left:0; right:0; bottom:0; padding:14px 16px max(16px,env(safe-area-inset-bottom,0px)); background:linear-gradient(#0000,#000c); display:grid; gap:10px; }
+  #scan .meldung { min-height:44px; font-size:16px; line-height:1.35; }
+  #scan .knoepfe { display:flex; gap:10px; flex-wrap:wrap; }
+  #scan button { font:inherit; font-weight:600; padding:11px 16px; border-radius:10px; border:1px solid #fff6; background:#ffffff1f; color:#fff; }
+  #scan button.fertig { background:#d4141c; border-color:#d4141c; margin-left:auto; }
   * { box-sizing:border-box; }
   [hidden] { display:none !important; }
   body { margin:0; font:16px/1.45 system-ui,"Segoe UI",Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);
@@ -69,6 +91,8 @@
   <section class="karte">
     <label class="titel" for="art">Artikelnummern (eine pro Zeile)</label>
     <textarea id="art" placeholder="Z100&#10;Z5-1&#10;Z170000*3&#10;Z100@A-12-03" autofocus spellcheck="false" autocapitalize="characters" autocomplete="off"></textarea>
+    <div class="scanzeile"><button id="scanbtn" type="button">📷 Barcodes scannen</button>
+      <span class="hinweis" style="margin:0">Etiketten, Regale oder Ware mit der Handykamera einlesen.</span></div>
     <p class="hinweis">Mehrere Etiketten für einen Artikel: <code>Z170000*3</code> = dreimal. Lagerplatz von Hand: <code>Z100@A-12-03</code>.
       Trennen mit Zeilenumbruch, Leerzeichen oder Komma.</p>
     <div class="optionen">
@@ -146,6 +170,20 @@
   <div id="res" aria-live="polite"></div>
   <footer>Artikelliste: <span id="listeinfo">…</span></footer>
 </main>
+
+<div id="scan" hidden role="dialog" aria-label="Barcode-Scanner">
+  <video id="scanvideo" playsinline muted></video>
+  <div class="oben"><b>Barcode scannen</b> – in den Rahmen halten, Code wird automatisch erkannt</div>
+  <div class="rahmen" id="scanrahmen"><i></i><i></i><i></i><i></i><b></b></div>
+  <div class="unten">
+    <div class="meldung" id="scanmeldung">Kamera wird gestartet …</div>
+    <div class="knoepfe">
+      <button type="button" id="scanundo">↶ Rückgängig</button>
+      <button type="button" id="scangruppe" hidden>↵ Neue Gruppe</button>
+      <button type="button" id="scanfertig" class="fertig">Fertig</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -740,6 +778,117 @@ $('platzdatei').onchange = async e => {
     $('platzinfo').textContent = PLATZMAP.size + ' Lagerplätze und ' + KATMAP.size + ' Katalogseiten geladen.';
   } catch (err) { $('platzinfo').textContent = 'Datei nicht lesbar: ' + (err.message || err); }
 };
+
+/* ------------------------------------------------------------ Barcode-Scanner (Kamera) */
+const SCAN = { stream: null, laeuft: false, detector: null, zx: null, stack: [], zaehler: new Map(), letzter: '', letzteZeit: 0, audio: null };
+function scanPiep(ok) {
+  try {
+    SCAN.audio = SCAN.audio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = SCAN.audio.createOscillator(), g = SCAN.audio.createGain();
+    o.frequency.value = ok ? 1500 : 300; g.gain.value = 0.15; o.connect(g); g.connect(SCAN.audio.destination);
+    o.start(); o.stop(SCAN.audio.currentTime + (ok ? 0.09 : 0.25));
+  } catch (e) { /* ohne Ton */ }
+  try { navigator.vibrate && navigator.vibrate(ok ? 60 : [40, 60, 40]); } catch (e) { /* ohne Vibration */ }
+}
+function scanMeldung(html, art) {
+  $('scanmeldung').innerHTML = html;
+  const r = $('scanrahmen'); r.classList.remove('treffer', 'fehler'); if (art) r.classList.add(art);
+  if (art) setTimeout(() => r.classList.remove('treffer', 'fehler'), 700);
+}
+function scanTreffer(code) {
+  const jetzt = Date.now();
+  if (code === SCAN.letzter && jetzt - SCAN.letzteZeit < 2200) { SCAN.letzteZeit = jetzt; return; }   // gleicher Code noch im Bild
+  SCAN.letzter = code; SCAN.letzteZeit = jetzt;
+  const e = LOOKUP.get(code.toUpperCase());
+  if (!e) { scanPiep(false); scanMeldung('<b>' + esc(code) + '</b><br>nicht in der Artikelliste', 'fehler'); return; }
+  const sammel = $('art_typ').value === 'sammel', ta = $('art'), mat = e[0];
+  if (sammel && SCAN.zaehler.has(mat)) { scanPiep(false); scanMeldung('<b>' + esc(mat) + '</b> ist in diesem Sammeletikett schon dabei', 'fehler'); return; }
+  const v = ta.value.replace(/\s+$/, '');
+  let zusatz;
+  if (!v) zusatz = mat;
+  else zusatz = (sammel ? ' ' : '\n') + mat;
+  ta.value = v + zusatz;
+  SCAN.stack.push({ mat, zusatz, vorher: v });
+  SCAN.zaehler.set(mat, (SCAN.zaehler.get(mat) || 0) + 1);
+  scanPiep(true);
+  scanMeldung('✔ <b>' + esc(mat) + '</b>' + (SCAN.zaehler.get(mat) > 1 ? ' ×' + SCAN.zaehler.get(mat) : '') + '<br><span style="opacity:.8">' + esc(e[1].slice(0, 70)) + '</span> · ' + SCAN.stack.length + ' gescannt', 'treffer');
+}
+async function scanDetektor() {
+  if ('BarcodeDetector' in window) {
+    try {
+      const f = await BarcodeDetector.getSupportedFormats();
+      if (f.includes('code_128')) {
+        const det = new BarcodeDetector({ formats: ['code_128', 'code_39', 'ean_13', 'ean_8'].filter(x => f.includes(x)) });
+        return async c => { const r = await det.detect(c); return r.length ? r[0].rawValue : null; };
+      }
+    } catch (e) { /* Fallback */ }
+  }
+  if (!window.ZXing) await new Promise((ok, err) => {
+    const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+    sc.onload = ok; sc.onerror = () => err(new Error('Scanner-Bibliothek konnte nicht geladen werden (Internet?)')); document.head.appendChild(sc);
+  });
+  const Z = window.ZXing, hints = new Map();
+  hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.CODE_39, Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8]);
+  hints.set(Z.DecodeHintType.TRY_HARDER, true);
+  const reader = new Z.MultiFormatReader(); reader.setHints(hints);
+  return async c => {
+    try {
+      const bm = new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(c)));
+      return reader.decode(bm).getText();
+    } catch (e) { return null; }
+  };
+}
+async function scanStart() {
+  const ov = $('scan'), video = $('scanvideo');
+  SCAN.stack = []; SCAN.zaehler = new Map(); SCAN.letzter = ''; $('scangruppe').hidden = $('art_typ').value !== 'sammel';
+  ov.hidden = false; scanMeldung('Kamera wird gestartet …');
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Kamera-Zugriff nicht möglich (nur über https oder in einem Browser mit Kamera).');
+    SCAN.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    video.srcObject = SCAN.stream; await video.play();
+    SCAN.detect = await scanDetektor();
+  } catch (e) {
+    scanStop(false);
+    alert('Scanner nicht verfügbar: ' + (e.message || e) + '\n\nTipp: Seite direkt im Handy-Browser öffnen (https://beddy86.github.io/LorencicLable/) und die Kamera erlauben.');
+    return;
+  }
+  scanMeldung('Barcode in den Rahmen halten …');
+  SCAN.laeuft = true;
+  const cv = document.createElement('canvas'), ctx = cv.getContext('2d', { willReadFrequently: true });
+  const schleife = async () => {
+    if (!SCAN.laeuft) return;
+    try {
+      const vw = video.videoWidth, vh = video.videoHeight;
+      if (vw) {
+        const cr = ov.getBoundingClientRect(), fr = $('scanrahmen').getBoundingClientRect();
+        const sc = Math.max(cr.width / vw, cr.height / vh), ox = (cr.width - vw * sc) / 2, oy = (cr.height - vh * sc) / 2;
+        const sx = Math.max(0, (fr.left - cr.left - ox) / sc), sy = Math.max(0, (fr.top - cr.top - oy) / sc);
+        const sw = Math.min(vw - sx, fr.width / sc), sh = Math.min(vh - sy, fr.height / sc);
+        const f = Math.min(1, 900 / sw); cv.width = Math.round(sw * f); cv.height = Math.round(sh * f);
+        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
+        const code = await SCAN.detect(cv);
+        if (code) scanTreffer(String(code).trim());
+      }
+    } catch (e) { /* nächster Versuch */ }
+    setTimeout(schleife, 110);
+  };
+  schleife();
+}
+function scanStop(fertig) {
+  SCAN.laeuft = false;
+  if (SCAN.stream) { SCAN.stream.getTracks().forEach(t => t.stop()); SCAN.stream = null; }
+  $('scanvideo').srcObject = null; $('scan').hidden = true;
+  if (fertig && SCAN.stack.length) { $('art').dispatchEvent(new Event('input')); $('art').scrollIntoView({ block: 'center' }); }
+}
+$('scanbtn').onclick = scanStart;
+$('scanfertig').onclick = () => scanStop(true);
+$('scangruppe').onclick = () => { const ta = $('art'); if (ta.value.trim()) { ta.value = ta.value.replace(/\s+$/, '') + '\n'; SCAN.zaehler = new Map(); scanMeldung('Neue Gruppe begonnen'); } };
+$('scanundo').onclick = () => {
+  const l = SCAN.stack.pop(); if (!l) return;
+  const ta = $('art'); ta.value = l.vorher; const n = (SCAN.zaehler.get(l.mat) || 1) - 1; n ? SCAN.zaehler.set(l.mat, n) : SCAN.zaehler.delete(l.mat);
+  SCAN.letzter = ''; scanMeldung('Entfernt: <b>' + esc(l.mat) + '</b> · ' + SCAN.stack.length + ' gescannt');
+};
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('scan').hidden) scanStop(true); });
 
 ladeDaten();
 </script>
