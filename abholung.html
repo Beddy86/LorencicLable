@@ -219,7 +219,7 @@ function baueBlatt() {
   const n = d.getNumberOfPages();
   for (let i = 1; i <= n; i++) { d.setPage(i); d.setFont('helvetica', 'normal'); d.setFontSize(8.5); d.setTextColor(120); d.text('Lorencic Bauservice – Abholung ' + datum + '   |   Seite ' + i + '/' + n, W / 2, 289, { align: 'center' }); }
   const sicher = (kunde === '-' ? 'Abholung' : kunde).replace(/[^\w\-]+/g, '_').slice(0, 30);
-  const name = 'Abholung_' + jetzt.getFullYear() + p2(jetzt.getMonth() + 1) + p2(jetzt.getDate()) + '_' + p2(jetzt.getHours()) + p2(jetzt.getMinutes()) + '_' + sicher + '.pdf';
+  const name = 'ABHOLUNG_HANDYSCAN_' + jetzt.getFullYear() + p2(jetzt.getMonth() + 1) + p2(jetzt.getDate()) + '_' + p2(jetzt.getHours()) + p2(jetzt.getMinutes()) + '_' + sicher + '.pdf';
   return { blob: d.output('blob'), name, datum, stk };
 }
 function speichern(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
@@ -231,7 +231,7 @@ $('senden').onclick = async () => {
   if (!an) { meldung('Bitte den Empfänger auswählen.', 'warn'); return; }
   if (an) { try { await navigator.clipboard.writeText(an); } catch (e) { /* ohne Zwischenablage */ } }
   const r = baueBlatt(), betreff = 'ABHOLUNG HANDYSCAN';
-  const text = 'Abholung vom ' + r.datum + '\n' + POS.length + ' Positionen, ' + r.stk + ' Stück\nErfasst von: ' + ($('mitarbeiter').value.trim() || '-') + '\nPDF im Anhang.\n\nFür VA01 (Material, Menge):\n' + POS.map(p => p.mat + '\t' + p.menge).join('\n');
+  const text = 'ABHOLUNG HANDYSCAN\n\nAbholung vom ' + r.datum + '\n' + POS.length + ' Positionen, ' + r.stk + ' Stück\nErfasst von: ' + ($('mitarbeiter').value.trim() || '-') + '\nPDF im Anhang.\n\nFür VA01 (Material, Menge):\n' + POS.map(p => p.mat + '\t' + p.menge).join('\n');
   const file = new File([r.blob], r.name, { type: 'application/pdf' });
   const txtName = r.name.replace(/\.pdf$/i, '') + '_VA01.txt';
   const txtFile = new File([POS.map(p => p.mat + '\t' + p.menge).join('\r\n') + '\r\n'], txtName, { type: 'text/plain' });
