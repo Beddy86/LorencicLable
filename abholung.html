@@ -94,6 +94,7 @@
       <button type="button" id="nurpdf" style="flex:1">Nur PDF speichern</button>
       <button type="button" id="leeren" style="flex:1">Liste leeren</button>
     </div>
+    <button type="button" id="mailadr" style="margin-top:10px;width:100%">Mail mit Adresse öffnen (PDF selbst anhängen)</button>
     <button type="button" id="va01" style="margin-top:10px;width:100%">Für VA01 kopieren (Material + Menge)</button>
     <p class="hinweis" id="info"></p>
   </section>
@@ -230,6 +231,15 @@ $('va01').onclick = async () => {
   const t = POS.map(p => p.mat + '\t' + p.menge).join('\n');
   try { await navigator.clipboard.writeText(t); $('info').textContent = 'Kopiert: ' + POS.length + ' Zeilen (Material, Menge). In VA01 die erste Material-Zelle markieren und Strg+V.'; }
   catch (e) { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); $('info').textContent = 'Kopiert: ' + POS.length + ' Zeilen.'; } catch (e2) { $('info').textContent = 'Kopieren nicht möglich.'; } ta.remove(); }
+};
+$('mailadr').onclick = () => {
+  if (!vorPruefung()) return;
+  const an = $('empf').value.trim(); if (!an) { meldung('Bitte den Empfänger auswählen.', 'warn'); return; }
+  const r = baueBlatt(), txtName = r.name.replace(/\.pdf$/i, '') + '_VA01.txt';
+  speichern(r.blob, r.name);
+  const text = 'Abholung vom ' + r.datum + '\n' + POS.length + ' Positionen, ' + r.stk + ' Stück\nErfasst von: ' + ($('mitarbeiter').value.trim() || '-') + '\n\n(Bitte die gespeicherte PDF-Datei anhängen: ' + r.name + ')\n\nFür VA01 (Material, Menge):\n' + POS.map(p => p.mat + '\t' + p.menge).join('\n');
+  setTimeout(() => { location.href = 'mailto:' + encodeURIComponent(an) + '?subject=' + encodeURIComponent('Abholung mit Scanner') + '&body=' + encodeURIComponent(text); }, 400);
+  $('info').textContent = 'PDF wurde gespeichert – in der Mail bitte anhängen.';
 };
 $('senden').onclick = async () => {
   if (!vorPruefung()) return;
