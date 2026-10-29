@@ -146,7 +146,7 @@
 
   <section class="karte">
     <details>
-      <summary>Eigene Fotos und Lagerplätze</summary>
+      <summary>Eigene Fotos</summary>
       <div class="inner">
         <div>
           <span class="titel">Eigene Fotos</span>
@@ -154,13 +154,13 @@
           <p class="hinweis">Dateiname = Artikelnummer, z. B. <code>Z100.jpg</code>. Eigene Fotos haben Vorrang vor den Katalogfotos.
             Einzelne Artikel ohne Foto kannst du nach dem Erstellen direkt belegen.</p>
         </div>
-        <div>
+        <div hidden>
           <span class="titel">Liste mit Lagerplatz und Katalogseite</span>
           <input type="file" id="platzdatei" accept=".csv,.xlsx,.xls,.txt">
           <p class="hinweis">Excel oder CSV mit den Spalten <code>Material</code> und <code>Lagerplatz</code> (optional <code>Katalogseite</code>).</p>
           <p class="hinweis" id="platzinfo"></p>
         </div>
-        <div>
+        <div hidden>
           <span class="titel">EAN-Zuordnung für den Scanner (alte Etiketten, Verpackungs-EANs)</span>
           <input type="file" id="eandatei" accept=".csv,.xlsx,.xls,.txt">
           <p class="hinweis">Excel aus SE16N, Tabelle MEAN, mit den Spalten <code>Material</code> und <code>EAN/UPC-Code</code>.</p>
