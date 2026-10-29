@@ -97,6 +97,7 @@
       <button type="button" id="nurpdf" style="flex:1">Nur PDF speichern</button>
       <button type="button" id="leeren" style="flex:1">Liste leeren</button>
     </div>
+    <button type="button" id="va01" style="margin-top:10px;width:100%">Für VA01 kopieren (Material + Menge)</button>
     <p class="hinweis" id="info"></p>
   </section>
   <footer><a href="./">← zu den Lageretiketten</a> · Artikelliste: <span id="listeinfo">…</span></footer>
@@ -224,12 +225,18 @@ function baueBlatt() {
 function speichern(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
 function vorPruefung() { if (!POS.length) { meldung('Noch keine Artikel erfasst.', 'warn'); return false; } return true; }
 $('nurpdf').onclick = () => { if (!vorPruefung()) return; const r = baueBlatt(); speichern(r.blob, r.name); $('info').textContent = 'PDF gespeichert: ' + r.name; };
+$('va01').onclick = async () => {
+  if (!vorPruefung()) return;
+  const t = POS.map(p => p.mat + '\t' + p.menge).join('\n');
+  try { await navigator.clipboard.writeText(t); $('info').textContent = 'Kopiert: ' + POS.length + ' Zeilen (Material, Menge). In VA01 die erste Material-Zelle markieren und Strg+V.'; }
+  catch (e) { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); $('info').textContent = 'Kopiert: ' + POS.length + ' Zeilen.'; } catch (e2) { $('info').textContent = 'Kopieren nicht möglich.'; } ta.remove(); }
+};
 $('senden').onclick = async () => {
   if (!vorPruefung()) return;
   const an = $('empf').value.trim();
   if (an) { try { await navigator.clipboard.writeText(an); } catch (e) { /* ohne Zwischenablage */ } }
   const r = baueBlatt(), betreff = 'Abholung ' + r.datum + ($('kunde').value.trim() ? ' – ' + $('kunde').value.trim() : '');
-  const text = 'Abholung vom ' + r.datum + '\n' + POS.length + ' Positionen, ' + r.stk + ' Stück\nErfasst von: ' + ($('mitarbeiter').value.trim() || '-') + '\nPDF im Anhang.';
+  const text = 'Abholung vom ' + r.datum + '\n' + POS.length + ' Positionen, ' + r.stk + ' Stück\nErfasst von: ' + ($('mitarbeiter').value.trim() || '-') + '\nPDF im Anhang.\n\nFür VA01 (Material, Menge):\n' + POS.map(p => p.mat + '\t' + p.menge).join('\n');
   const file = new File([r.blob], r.name, { type: 'application/pdf' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try { await navigator.share({ files: [file], title: betreff, text }); $('info').textContent = 'Zum Senden an ' + (an || 'den Empfänger') + ' das Mailprogramm wählen.'; return; }
