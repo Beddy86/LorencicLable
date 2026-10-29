@@ -238,10 +238,13 @@ $('senden').onclick = async () => {
   const r = baueBlatt(), betreff = 'Abholung ' + r.datum + ($('kunde').value.trim() ? ' – ' + $('kunde').value.trim() : '');
   const text = 'Abholung vom ' + r.datum + '\n' + POS.length + ' Positionen, ' + r.stk + ' Stück\nErfasst von: ' + ($('mitarbeiter').value.trim() || '-') + '\nPDF im Anhang.\n\nFür VA01 (Material, Menge):\n' + POS.map(p => p.mat + '\t' + p.menge).join('\n');
   const file = new File([r.blob], r.name, { type: 'application/pdf' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: betreff, text }); $('info').textContent = 'Zum Senden an ' + (an || 'den Empfänger') + ' das Mailprogramm wählen.'; return; }
+  const txtName = r.name.replace(/\.pdf$/i, '') + '_VA01.txt';
+  const txtFile = new File([POS.map(p => p.mat + '\t' + p.menge).join('\r\n') + '\r\n'], txtName, { type: 'text/plain' });
+  if (navigator.canShare && navigator.canShare({ files: [file, txtFile] })) {
+    try { await navigator.share({ files: [file, txtFile], title: betreff, text: text.split('\n\nFür VA01')[0] + '\nVA01-Textdatei im Anhang (Strg+A, Strg+C, in VA01 einfügen).' }); $('info').textContent = 'Zum Senden an ' + (an || 'den Empfänger') + ' das Mailprogramm wählen.'; return; }
     catch (e) { if (e && e.name === 'AbortError') return; }
   }
+  speichern(txtFile, txtName);
   speichern(r.blob, r.name);   // Fallback (Computer): PDF speichern und Mail öffnen, PDF von Hand anhängen
   location.href = 'mailto:' + encodeURIComponent(an) + '?subject=' + encodeURIComponent(betreff) + '&body=' + encodeURIComponent(text + '\n\n(Bitte die gespeicherte PDF-Datei anhängen: ' + r.name + ')');
   $('info').textContent = 'PDF wurde gespeichert – bitte in der Mail anhängen.';
