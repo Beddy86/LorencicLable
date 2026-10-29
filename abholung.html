@@ -71,8 +71,7 @@
       <input type="text" id="kunde" placeholder="z. B. Fa. Mustermann, Tel. 0664 …" autocomplete="off"></label>
     <label class="feld">Erfasst von
       <select id="mitarbeiter"><option value="">– bitte wählen –</option><option>PMU</option><option>KSC</option><option>TVA</option><option>MRO</option><option>SPA</option><option>AVU</option></select></label>
-    <label class="feld">Empfänger (PDF per Mail an)
-      <select id="empf"><option value="">– bitte wählen –</option><option>p.mueller@lorencic.at</option><option>s.payrhuber@lorencic.at</option><option>a.vukadin@lorencic.at</option><option>wels@lorencic.at</option></select></label>
+    <label class="feld">Notiz (optional)<textarea id="notiz" placeholder="z. B. Lieferschein folgt, Rest später"></textarea></label>
   </section>
 
   <section class="karte">
@@ -88,14 +87,14 @@
   </section>
 
   <section class="karte">
-    <label class="feld">Notiz (optional)<textarea id="notiz" placeholder="z. B. Lieferschein folgt, Rest später"></textarea></label>
+    <span class="titel">Versand</span>
+    <label class="feld">Empfänger (PDF per Mail an)
+      <select id="empf"><option value="">– bitte wählen –</option><option>p.mueller@lorencic.at</option><option>s.payrhuber@lorencic.at</option><option>a.vukadin@lorencic.at</option><option>wels@lorencic.at</option></select></label>
     <button type="button" class="haupt" id="senden">PDF erstellen &amp; per Mail senden</button>
     <div class="zeile" style="margin-top:10px">
       <button type="button" id="nurpdf" style="flex:1">Nur PDF speichern</button>
       <button type="button" id="leeren" style="flex:1">Liste leeren</button>
     </div>
-    <button type="button" id="mailadr" style="margin-top:10px;width:100%">Mail mit Adresse öffnen (PDF selbst anhängen)</button>
-    <button type="button" id="va01" style="margin-top:10px;width:100%">Für VA01 kopieren (Material + Menge)</button>
     <p class="hinweis" id="info"></p>
   </section>
   <footer><a href="./">← zu den Lageretiketten</a> · Artikelliste: <span id="listeinfo">…</span></footer>
@@ -226,27 +225,12 @@ function baueBlatt() {
 function speichern(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
 function vorPruefung() { if (!POS.length) { meldung('Noch keine Artikel erfasst.', 'warn'); return false; } if (!$('mitarbeiter').value) { meldung('Bitte „Erfasst von“ auswählen.', 'warn'); return false; } return true; }
 $('nurpdf').onclick = () => { if (!vorPruefung()) return; const r = baueBlatt(); speichern(r.blob, r.name); $('info').textContent = 'PDF gespeichert: ' + r.name; };
-$('va01').onclick = async () => {
-  if (!vorPruefung()) return;
-  const t = POS.map(p => p.mat + '\t' + p.menge).join('\n');
-  try { await navigator.clipboard.writeText(t); $('info').textContent = 'Kopiert: ' + POS.length + ' Zeilen (Material, Menge). In VA01 die erste Material-Zelle markieren und Strg+V.'; }
-  catch (e) { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); $('info').textContent = 'Kopiert: ' + POS.length + ' Zeilen.'; } catch (e2) { $('info').textContent = 'Kopieren nicht möglich.'; } ta.remove(); }
-};
-$('mailadr').onclick = () => {
-  if (!vorPruefung()) return;
-  const an = $('empf').value.trim(); if (!an) { meldung('Bitte den Empfänger auswählen.', 'warn'); return; }
-  const r = baueBlatt(), txtName = r.name.replace(/\.pdf$/i, '') + '_VA01.txt';
-  speichern(r.blob, r.name);
-  const text = 'Abholung vom ' + r.datum + '\n' + POS.length + ' Positionen, ' + r.stk + ' Stück\nErfasst von: ' + ($('mitarbeiter').value.trim() || '-') + '\n\n(Bitte die gespeicherte PDF-Datei anhängen: ' + r.name + ')\n\nFür VA01 (Material, Menge):\n' + POS.map(p => p.mat + '\t' + p.menge).join('\n');
-  setTimeout(() => { location.href = 'mailto:' + encodeURIComponent(an) + '?subject=' + encodeURIComponent('Abholung mit Scanner') + '&body=' + encodeURIComponent(text); }, 400);
-  $('info').textContent = 'PDF wurde gespeichert – in der Mail bitte anhängen.';
-};
 $('senden').onclick = async () => {
   if (!vorPruefung()) return;
   const an = $('empf').value.trim();
   if (!an) { meldung('Bitte den Empfänger auswählen.', 'warn'); return; }
   if (an) { try { await navigator.clipboard.writeText(an); } catch (e) { /* ohne Zwischenablage */ } }
-  const r = baueBlatt(), betreff = 'Abholung mit Scanner';
+  const r = baueBlatt(), betreff = 'ABHOLUNG HANDYSCAN';
   const text = 'Abholung vom ' + r.datum + '\n' + POS.length + ' Positionen, ' + r.stk + ' Stück\nErfasst von: ' + ($('mitarbeiter').value.trim() || '-') + '\nPDF im Anhang.\n\nFür VA01 (Material, Menge):\n' + POS.map(p => p.mat + '\t' + p.menge).join('\n');
   const file = new File([r.blob], r.name, { type: 'application/pdf' });
   const txtName = r.name.replace(/\.pdf$/i, '') + '_VA01.txt';
