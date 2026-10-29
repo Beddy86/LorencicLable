@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="de"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#d4141c">
+<title>Reparatur-Sendungen</title>
+<link rel="icon" href="favicon.png">
+<style>
+  :root { --rot:#d4141c; --rot-text:#fff; --text:#1d1d1f; --grau:#62626a; --linie:#d6d6dc; --bg:#f3f3f5; --karte:#fff; --feld:#fff; --ok:#1a7f37; --warn:#a66a00; --code:#ececf0; }
+  @media (prefers-color-scheme: dark) { :root { --rot:#ef4b52; --rot-text:#1a0507; --text:#ececf0; --grau:#a2a2ac; --linie:#3a3a42; --bg:#16161a; --karte:#202026; --feld:#2a2a31; --ok:#4cc26e; --warn:#e6a93a; --code:#2e2e36; color-scheme: dark; } }
+  * { box-sizing:border-box; } [hidden] { display:none !important; }
+  body { margin:0; font:16px/1.45 system-ui,"Segoe UI",Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);
+         padding:0 max(16px, env(safe-area-inset-left, 0px)) 28px; }
+  header { margin-inline:calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding:18px max(16px, env(safe-area-inset-left, 0px)); background:var(--rot); color:var(--rot-text);
+           display:flex; align-items:center; justify-content:space-between; gap:14px; }
+  header h1 { margin:0; font-size:22px; } header p { margin:2px 0 0; font-size:14px; opacity:.92; }
+  .logo { height:46px; width:auto; flex-shrink:0; background:#fff; padding:5px 9px; border-radius:8px; }
+  main { max-width:760px; margin:20px auto 0; display:grid; gap:14px; }
+  .karte { background:var(--karte); border:1px solid var(--linie); border-radius:12px; padding:18px; min-width:0; }
+  .titel { display:block; font-weight:650; margin-bottom:6px; }
+  input[type=text], input[type=email], textarea, select { width:100%; font:inherit; padding:11px 12px; border:1px solid var(--linie); border-radius:8px; background:var(--feld); color:var(--text); }
+  textarea { min-height:70px; resize:vertical; }
+  input:focus, textarea:focus, select:focus, button:focus-visible { outline:2px solid var(--rot); outline-offset:1px; }
+  .feld { display:grid; gap:4px; margin-bottom:12px; font-weight:600; } .feld input, .feld select { font-weight:400; }
+  .hinweis { color:var(--grau); font-size:14px; margin:6px 0 0; font-weight:400; }
+  button { font:inherit; font-weight:650; padding:12px 16px; border-radius:10px; border:1px solid var(--linie); background:var(--feld); color:var(--text); cursor:pointer; }
+  button.haupt { background:var(--rot); border-color:var(--rot); color:var(--rot-text); width:100%; font-size:17px; padding:14px; }
+  button.rand { border-color:var(--rot); color:var(--rot); }
+  .zeile { display:flex; gap:10px; align-items:stretch; flex-wrap:wrap; }
+  .zeile > input { flex:1 1 130px; width:auto; min-width:0; }
+  .pos { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 10px; padding:11px 0; border-top:1px solid var(--linie); align-items:center; }
+  .pos:first-child { border-top:0; }
+  .pos .nr { font-weight:700; font-size:17px; } .pos .txt { color:var(--grau); font-size:14px; grid-column:1; overflow-wrap:anywhere; }
+  .pos.unbekannt .nr { color:var(--warn); }
+  .menge { grid-column:2; grid-row:1 / span 2; display:flex; align-items:center; gap:6px; }
+  .menge button { width:40px; height:40px; padding:0; font-size:20px; line-height:1; }
+  .menge input { width:56px; text-align:center; padding:9px 4px; font-weight:700; font-size:17px; }
+  .menge .weg { color:var(--rot); margin-left:4px; }
+  .summe { display:flex; justify-content:space-between; margin-top:10px; padding-top:10px; border-top:2px solid var(--linie); font-weight:650; }
+  .leer { color:var(--grau); padding:6px 0; }
+  .meldung { margin-top:12px; padding:11px 13px; border-radius:8px; background:var(--code); font-size:15px; }
+  .meldung.ok { border-left:4px solid var(--ok); } .meldung.warn { border-left:4px solid var(--warn); }
+  details summary { cursor:pointer; font-weight:650; }
+  footer { color:var(--grau); font-size:13px; text-align:center; margin-top:6px; } footer a { color:inherit; }
+  /* Barcode-Scanner */
+  .scanzeile { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+  #scanbtn { font:inherit; font-weight:600; padding:9px 14px; border-radius:8px; border:1px solid var(--rot); background:transparent; color:var(--rot); cursor:pointer; }
+  #scan { position:fixed; inset:0; z-index:50; background:#000; display:flex; flex-direction:column; color:#fff; }
+  #scan video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  #scan .rahmen { position:absolute; left:50%; top:42%; width:min(88vw,560px); height:min(34vw,200px); min-height:110px; transform:translate(-50%,-50%);
+                  border-radius:12px; box-shadow:0 0 0 100vmax rgba(0,0,0,.55); border:2px solid rgba(255,255,255,.55); }
+  #scan .rahmen i { position:absolute; width:26px; height:26px; border:4px solid #ff3b43; }
+  #scan .rahmen i:nth-child(1){left:-3px;top:-3px;border-right:0;border-bottom:0;border-top-left-radius:12px}
+  #scan .rahmen i:nth-child(2){right:-3px;top:-3px;border-left:0;border-bottom:0;border-top-right-radius:12px}
+  #scan .rahmen i:nth-child(3){left:-3px;bottom:-3px;border-right:0;border-top:0;border-bottom-left-radius:12px}
+  #scan .rahmen i:nth-child(4){right:-3px;bottom:-3px;border-left:0;border-top:0;border-bottom-right-radius:12px}
+  #scan .rahmen b { position:absolute; left:8px; right:8px; top:50%; height:2px; background:#ff3b43; box-shadow:0 0 8px #ff3b43; animation:scanlinie 1.6s ease-in-out infinite alternate; }
+  @keyframes scanlinie { from{top:12%} to{top:88%} }
+  #scan .rahmen.treffer { border-color:#3ddc84; } #scan .rahmen.fehler { border-color:#ffb020; }
+  #scan .oben { position:relative; padding:14px 16px; background:linear-gradient(#000a,#0000); font-size:15px; }
+  #scan .unten { position:absolute; left:0; right:0; bottom:0; padding:14px 16px max(16px,env(safe-area-inset-bottom,0px)); background:linear-gradient(#0000,#000c); display:grid; gap:10px; }
+  #scan .meldung { min-height:44px; font-size:16px; line-height:1.35; }
+  #scan .knoepfe { display:flex; gap:10px; flex-wrap:wrap; }
+  #scan button { font:inherit; font-weight:600; padding:11px 16px; border-radius:10px; border:1px solid #fff6; background:#ffffff1f; color:#fff; }
+  #scan button.fertig { background:#d4141c; border-color:#d4141c; margin-left:auto; }
+  nav.tabs { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; max-width:760px; margin:14px auto 0; }
+  nav.tabs button { padding:10px 4px; font-size:14px; border-radius:10px; }
+  nav.tabs button.an { background:var(--rot); border-color:var(--rot); color:var(--rot-text); }
+  nav.tabs b { display:block; font-size:12px; font-weight:600; opacity:.85; }
+  .raster { display:grid; grid-template-columns:1fr 1fr; gap:0 12px; } 
+  .chip { display:inline-block; font-size:12px; font-weight:700; padding:2px 9px; border-radius:99px; background:var(--code); color:var(--grau); white-space:nowrap; }
+  .chip.erfasst { background:#fde8e9; color:#a10e14; } .chip.versendet { background:#fff1d6; color:#8a5a00; } .chip.angenommen { background:#dcf3e3; color:#1a7f37; } .chip.fehlt { background:#e8e0f5; color:#5a2fa0; }
+  @media (prefers-color-scheme: dark) { .chip.erfasst { background:#4a1c1e; color:#ffb3b6; } .chip.versendet { background:#4a3714; color:#ffd48a; } .chip.angenommen { background:#173a24; color:#8be0a3; } .chip.fehlt { background:#33264d; color:#cdb7f5; } }
+  .rep { border:1px solid var(--linie); border-radius:10px; padding:11px 12px; margin-top:8px; background:var(--feld); }
+  .rep .kopf { display:flex; justify-content:space-between; gap:8px; align-items:baseline; flex-wrap:wrap; }
+  .rep .nr { font-weight:750; font-size:17px; } .rep .klein { color:var(--grau); font-size:14px; }
+  .rep label.wahl { display:flex; gap:10px; align-items:flex-start; cursor:pointer; }
+  .rep label.wahl input { width:22px; height:22px; margin-top:2px; flex-shrink:0; }
+  .filter { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; } .filter button { padding:6px 12px; font-size:14px; border-radius:99px; } .filter button.an { background:var(--rot); border-color:var(--rot); color:var(--rot-text); }
+  .leer { color:var(--grau); text-align:center; padding:18px 6px; }
+  .aktionen { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; } .aktionen button { padding:8px 12px; font-size:14px; }
+  .meldung { padding:10px 12px; border-radius:8px; background:var(--code); border-left:4px solid var(--grau); margin-top:10px; font-size:15px; }
+  .meldung.ok { border-color:var(--ok); } .meldung.warn { border-color:var(--warn); }
+  .historie { font-size:13px; color:var(--grau); margin-top:6px; }
+  .sendungskopf { font-weight:750; font-size:18px; }
+</style></head><body>
+<header><div><h1>Reparatur-Sendungen</h1><p>Scheine erfassen, Box packen, Eingang scannen · Testversion</p></div><img class="logo" src="data:image/png;base64,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bYcOqKqLb775hueff45Vq1ZSXFwKQEKC2epmyJDreeutt82ZTIrCX154gQkTPiA5ORm/3x+h0ey5Sd9++x3poUweeOgBcnNznT7bQghcLhdutxtN0/j1r3/DI4/8ku27djL29rEcOXKE0aNH8/bb7yINA0Pa0zhyuPnmYRw8eIBRo0bz6KO/ZujQGyksLODJJ39H167drJpp+NvfXuLNN99k3769BIM6miaIi4snKSmJ118fx9ChwwCzQ8njjz9GWloafr8/0u9WVYqKinj33fdo06ZN1Qo5w8LOm0IIn1X8c9YArFvTBq+2haitfXVd58MPPzytNqB1TmhYfaeuv/56mjZthhEMorhclE2YSujoXpT4dAide+azq1NntC4dkcB3i77j0KFDJCcn065dO9LT0ykvryA3Nxe/38eKFSv485+fY+rUjyL8+1AoxHPPPUdhYSEZGRlomkaDBtkRnEAwGGTevHmoqkr37t3p3r1HBBk5a9ZXBINBmjRp4rQumjhxIo8++kv8fj/9+vXj2muv48iRI0yfPo2ysjJmz55FTk4OF1xwAceOHeP7778nISGB+Ph4GjRoENF6pqSkhAsvvIj27TuwePEPbN++nYSEBNq0aUNWVha6rrN7924OHz6Mz+fj1Vdf4bbbbicQCFJWVobb7aJRo8YRprAQgpdf/jtHjx4lMzOLP/zhj3z22WeWW5fOkCHXW/dI8PDDP+f9998jJSWFu+66m4svvphFixYxb95cSktLefPNN7j++husyMps4uK8eDweMjIynPtsd0dt3bo1gwYNirh/VCZulALfhAH6rCzNynseBXSiSubVqlWrYhoW9WP7Qi6Xq7LtrKoiS8soe2cCQnjNOOG5tIRAygDeQf3QrCT4OXPnous6KSmpfPjhNNLT0wH4/vtF3HrrGBITE62eU2b7WV03pf+kSROZM2c2HTt2RAjB0aNHSU1Ncza7qqqsXr2abdu2oaoqV1wxyAm3uVwuCgsLWbx4MYZh0KtXL5o1a8bGjRt55pmnCQaD3H33Pbz44ktOe9u8vDzef/89ZxCZlJLvv1/EwYMHUBSFxx9/guHDb8Hn81lF75UD2U1hMRO/309CQgJvvPGW08vqyJEjDB9+M9u2bUUIQWlpKQUFBfj9flwuF02bNnWuSdM0Fi36jq+++gpFUbj77rtp3rwFn3/+OVJK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" alt="Lorencic Bauservice"></header>
+<nav class="tabs" id="tabs">
+  <button type="button" data-t="erfassen" class="an">📝 Erfassen<b id="z_erf"></b></button>
+  <button type="button" data-t="versand">📦 Versand<b id="z_ver"></b></button>
+  <button type="button" data-t="eingang">✅ Eingang<b id="z_ein"></b></button>
+  <button type="button" data-t="uebersicht">🔎 Übersicht<b id="z_ges"></b></button>
+</nav>
+<main>
+  <!-- ======================= ERFASSEN ======================= -->
+  <section id="t_erfassen" class="karte">
+    <span class="titel">Reparaturschein erfassen</span>
+    <div class="zeile">
+      <button type="button" class="haupt" id="fotobtn" style="flex:1 1 220px">📷 Schein fotografieren</button>
+      <input type="file" id="fotodatei" accept="image/*" capture="environment" hidden>
+      <button type="button" class="rand" id="barbtn" style="flex:1 1 160px">Barcode scannen</button>
+    </div>
+    <p class="hinweis">Foto vom ganzen Schein: Rep.-Nr., Kunde, Material- und Seriennummer werden automatisch gelesen. Bitte danach kurz prüfen.</p>
+    <div id="fmeld" class="meldung" hidden></div>
+    <div class="raster" style="margin-top:12px">
+      <label class="feld">Rep.-Nr.<input type="text" id="f_nr" inputmode="numeric" autocomplete="off"></label>
+      <label class="feld">Jahr<input type="text" id="f_jahr" inputmode="numeric" autocomplete="off"></label>
+      <label class="feld" style="grid-column:1/-1">Kunde (Auftraggeber)<input type="text" id="f_kunde" autocomplete="off"></label>
+      <label class="feld">Kundennummer<input type="text" id="f_kundennr" inputmode="numeric" autocomplete="off"></label>
+      <label class="feld">Datum<input type="text" id="f_datum" placeholder="TT.MM.JJJJ" autocomplete="off"></label>
+      <label class="feld">Materialnummer<input type="text" id="f_material" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
+      <label class="feld">Seriennummer<input type="text" id="f_serien" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
+      <label class="feld">Techniker<input type="text" id="f_techniker" autocomplete="off"></label>
+      <label class="feld">Auftragsgrund<input type="text" id="f_grund" autocomplete="off"></label>
+    </div>
+    <p class="hinweis" id="f_matinfo" style="margin:-6px 0 10px"></p>
+    <button type="button" class="haupt" id="speichern">Reparatur speichern</button>
+    <div class="zeile" style="margin-top:8px"><button type="button" id="leerenform" style="flex:1">Felder leeren</button></div>
+  </section>
+  <section id="t_erfassen2" class="karte">
+    <span class="titel">Noch nicht versendet <span class="hinweis" id="erf_anz" style="display:inline"></span></span>
+    <div id="erf_liste"></div>
+  </section>
+
+  <!-- ======================= VERSAND ======================= -->
+  <section id="t_versand" class="karte" hidden>
+    <span class="titel">Neue Sendung (Palette / Gitterbox)</span>
+    <p class="hinweis" style="margin-top:0">Haken setzen bei allem, was in diese Box kommt, dann Sendung anlegen. Der Code der Sendung steht als Barcode auf der Packliste.</p>
+    <div id="ver_liste"></div>
+    <div class="raster" style="margin-top:14px">
+      <label class="feld">Richtung<select id="v_richtung"></select></label>
+      <label class="feld">Behälter<select id="v_art"><option>Palette</option><option>Gitterbox</option><option>Karton</option></select></label>
+      <label class="feld" style="grid-column:1/-1">GW-Sendungsnummer (kann später nachgetragen werden)<input type="text" id="v_gw" autocomplete="off" spellcheck="false"></label>
+    </div>
+    <button type="button" class="haupt" id="v_anlegen">Sendung anlegen &amp; Packliste (PDF)</button>
+    <div id="v_meld" class="meldung" hidden></div>
+  </section>
+  <section id="t_versand2" class="karte" hidden>
+    <span class="titel">Sendungen</span>
+    <div id="sen_liste"></div>
+  </section>
+
+  <!-- ======================= EINGANG ======================= -->
+  <section id="t_eingang" class="karte" hidden>
+    <span class="titel">Sendung annehmen</span>
+    <div class="zeile">
+      <button type="button" class="haupt" id="e_scan" style="flex:1 1 200px">📷 Sendungscode scannen</button>
+    </div>
+    <div class="zeile" style="margin-top:10px">
+      <input type="text" id="e_code" placeholder="oder Sendungscode eintippen" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <button type="button" class="rand" id="e_ok">Suchen</button>
+    </div>
+    <div id="e_meld" class="meldung" hidden></div>
+    <div id="e_box" style="margin-top:12px" hidden></div>
+  </section>
+
+  <!-- ======================= ÜBERSICHT ======================= -->
+  <section id="t_uebersicht" class="karte" hidden>
+    <span class="titel">Alle Reparaturen</span>
+    <input type="text" id="q" placeholder="Suchen: Kunde, Rep.-Nr., Seriennummer, Material, Sendung, GW-Nr." autocomplete="off">
+    <div class="filter" id="filter">
+      <button type="button" data-s="" class="an">Alle</button>
+      <button type="button" data-s="erfasst">Erfasst</button>
+      <button type="button" data-s="versendet">Unterwegs</button>
+      <button type="button" data-s="angenommen">Angenommen</button>
+      <button type="button" data-s="fehlt">Fehlt</button>
+    </div>
+    <div id="u_liste"></div>
+    <div class="aktionen">
+      <button type="button" id="u_csv">Liste als Excel (CSV) speichern</button>
+    </div>
+  </section>
+  <section id="t_daten" class="karte">
+    <details><summary>Einstellungen und Daten</summary>
+      <div class="raster" style="margin-top:12px">
+        <label class="feld">Diese Filiale<input type="text" id="s_von" autocomplete="off"></label>
+        <label class="feld">Andere Filiale<input type="text" id="s_nach" autocomplete="off"></label>
+        <label class="feld" style="grid-column:1/-1">Angenommen von (Kürzel/Name)<input type="text" id="s_ma" autocomplete="off"></label>
+      </div>
+      <p class="hinweis">Testversion: Die Daten liegen nur in diesem Browser. Zum Übertragen auf ein anderes Gerät: Datensicherung speichern und dort laden.</p>
+      <div class="aktionen">
+        <button type="button" id="d_sichern">Datensicherung speichern</button>
+        <button type="button" id="d_laden">Datensicherung laden</button><input type="file" id="d_datei" accept=".json" hidden>
+      </div>
+    </details>
+  </section>
+  <footer style="text-align:center;color:var(--grau);font-size:14px"><a href="./" style="color:inherit">← Lageretiketten</a> · <a href="abholung.html" style="color:inherit">Abholung erfassen</a> · Artikelliste: <span id="listeinfo">…</span></footer>
+</main>
+
+<div id="scan" hidden role="dialog" aria-label="Barcode-Scanner">
+  <video id="scanvideo" playsinline muted></video>
+  <div class="oben" id="scanoben"><b>Artikel scannen</b> – Barcode in den Rahmen halten, jeder Scan zählt +1</div>
+  <div class="rahmen" id="scanrahmen"><i></i><i></i><i></i><i></i><b></b></div>
+  <div class="unten">
+    <div class="meldung" id="scanmeldung" style="background:none;border:0;padding:0">Kamera wird gestartet …</div>
+    <input type="range" id="scanzoom" hidden style="width:100%">
+    <div class="knoepfe">
+            <button type="button" id="scanlicht" hidden>🔦 Licht</button>
+      <button type="button" id="scanfoto">📷 Foto</button><input type="file" id="scanfotodatei" accept="image/*" capture="environment" hidden>
+      <button type="button" id="scanfertig" class="fertig">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+/* ============================================================ Reparatur-Sendungen (Prototyp, Daten nur in diesem Browser) */
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const LOOKUP = new Map();
+const KEY = 'reparaturen-v1';
+const STATUS = { erfasst: 'Erfasst', versendet: 'Unterwegs', angenommen: 'Angenommen', fehlt: 'Fehlt' };
+let DB = { rep: [], sen: [], set: { von: 'Wels', nach: 'Andere Filiale', ma: '' } };
+let EDIT = null, EIN = null, FILTER = '', OFFEN = null;
+const nu = () => new Date().toISOString();
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const zeit = iso => { const d = new Date(iso); return d.toLocaleDateString('de-AT') + ' ' + d.toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' }); };
+const logR = (r, t) => { (r.hist = r.hist || []).push({ t: nu(), x: t }); };
+function laden() { try { const d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (d && d.rep) DB = Object.assign(DB, d, { set: Object.assign(DB.set, d.set || {}) }); } catch (e) { /* leer */ } }
+function sichern() { try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch (e) { /* voll/gesperrt */ } }
+async function ladeDaten() {
+  try { const liste = await fetch('liste.json').then(r => r.json()); for (const [m, t] of liste) LOOKUP.set(m.toUpperCase(), [m, t]); $('listeinfo').textContent = LOOKUP.size.toLocaleString('de-AT') + ' Artikel'; }
+  catch (e) { $('listeinfo').textContent = 'nicht geladen'; }
+}
+const sen = code => DB.sen.find(s => s.code === code);
+const repById = id => DB.rep.find(r => r.id === id);
+function meld(id, t, art) { const m = $(id); m.hidden = !t; m.className = 'meldung ' + (art || ''); m.innerHTML = t || ''; }
+
+/* ---------------------------------------------------------- Reiter */
+const TABS = { erfassen: ['t_erfassen', 't_erfassen2'], versand: ['t_versand', 't_versand2'], eingang: ['t_eingang'], uebersicht: ['t_uebersicht'] };
+function tab(n) {
+  for (const k in TABS) TABS[k].forEach(id => { $(id).hidden = k !== n; });
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('an', b.dataset.t === n));
+  render();
+}
+$('tabs').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (b) tab(b.dataset.t); });
+
+/* ---------------------------------------------------------- Auslesen des Scheins */
+const CONF = { S: ['5'], 5: ['S'], O: ['0'], 0: ['O'], I: ['1'], 1: ['I'], B: ['8'], 8: ['B'], Z: ['2'], 2: ['Z'] };
+function fixMaterial(m) {
+  m = (m || '').toUpperCase(); if (!LOOKUP.size || !m || LOOKUP.has(m)) return m;
+  for (let i = 0; i < m.length; i++) for (const c of (CONF[m[i]] || [])) { const v = m.slice(0, i) + c + m.slice(i + 1); if (LOOKUP.has(v)) return v; }
+  return m;
+}
+function parseSchein(t) {
+  const o = {}, L = t.replace(/\r/g, '').split('\n').map(s => s.trim()).filter(Boolean); let m;
+  for (const l of L) { if ((m = l.match(/Reparaturschein\D{0,3}(\d{6,8})(.*)$/i))) { o.nr = m[1]; const y = m[2].match(/(20\d{2})\s*$/); if (y) o.jahr = y[1]; break; } }
+  if ((m = t.match(/\b(\d{2}\.\d{2}\.\d{4})\b/))) o.datum = m[1];
+  if ((m = t.match(/Kunde\w{0,6}nummer\W{0,3}(\d{4,})/i))) o.kundennr = m[1];
+  if ((m = t.match(/Serien\w{0,4}nummer\W{0,3}([A-Z0-9][A-Z0-9\-\/]{2,})/i))) o.serien = m[1].toUpperCase();
+  if ((m = t.match(/Material\w{0,4}nummer\W{0,3}([A-Z0-9][A-Z0-9\-]{1,})/i))) o.material = fixMaterial(m[1]);
+  if ((m = t.match(/Techni\w*\.?:?[ \t]+([A-ZÄÖÜ][a-zäöüß]+(?:[ \t][A-ZÄÖÜ][a-zäöüß]+)?)/))) o.techniker = m[1];
+  const i = L.findIndex(l => /^Firma\b/i.test(l));
+  if (i >= 0) { const same = L[i].replace(/^Firma\s*:?\s*/i, ''); o.kunde = same || L[i + 1] || ''; }
+  if ((m = t.match(/Auf?tragsgrund\W{0,3}([^\n]*)/i)) && m[1].trim().length > 2 && !/Ansprech/i.test(m[1])) o.grund = m[1].trim();
+  return o;
+}
+function formSetzen(o) {
+  const map = { nr: 'f_nr', jahr: 'f_jahr', kunde: 'f_kunde', kundennr: 'f_kundennr', datum: 'f_datum', material: 'f_material', serien: 'f_serien', techniker: 'f_techniker', grund: 'f_grund' };
+  for (const k in map) if (o[k] != null) $(map[k]).value = o[k];
+  matInfo();
+}
+const formLesen = () => ({ nr: $('f_nr').value.replace(/\D/g, ''), jahr: $('f_jahr').value.replace(/\D/g, ''), kunde: $('f_kunde').value.trim(), kundennr: $('f_kundennr').value.trim(), datum: $('f_datum').value.trim(),
+  material: $('f_material').value.trim().toUpperCase(), serien: $('f_serien').value.trim().toUpperCase(), techniker: $('f_techniker').value.trim(), grund: $('f_grund').value.trim() });
+function matInfo() { const e = LOOKUP.get($('f_material').value.trim().toUpperCase()); $('f_matinfo').textContent = e ? 'Material: ' + e[1] : ''; }
+$('f_material').addEventListener('input', matInfo);
+function formLeeren() { for (const id of ['f_nr', 'f_jahr', 'f_kunde', 'f_kundennr', 'f_datum', 'f_material', 'f_serien', 'f_techniker', 'f_grund']) $(id).value = ''; EDIT = null; $('speichern').textContent = 'Reparatur speichern'; matInfo(); }
+$('leerenform').onclick = () => { formLeeren(); meld('fmeld', ''); };
+function zahlenSplit(code) {      // Barcode des Scheins: Rep.-Nr., evtl. mit Jahr dahinter
+  const d = String(code).replace(/\D/g, ''); const m = d.match(/^(\d{6,8})(20\d{2})?$/);
+  return m ? { nr: m[1], jahr: m[2] || '' } : (d.length >= 5 ? { nr: d, jahr: '' } : null);
+}
+async function ocrText(c) {
+  if (!window.Tesseract) await new Promise((ok, err) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'; sc.onload = ok; sc.onerror = () => err(new Error('Texterkennung konnte nicht geladen werden (Internet?)')); document.head.appendChild(sc); });
+  if (!SCAN.ocr2) { SCAN.ocr2 = await Tesseract.createWorker('eng', 1, { langPath: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng/4.0.0_best_int' }); await SCAN.ocr2.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' }); }
+  const { data } = await SCAN.ocr2.recognize(scanBild(scanDehnen(scanGrauCanvas(c)))); return data.text;
+}
+async function bildLaden(file, max) { const bmp = await createImageBitmap(file), k = Math.min(1, max / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k); c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); return c; }
+async function barcodeInBild(c) {       // Strichcode irgendwo im Foto suchen
+  if (!SCAN.detect) SCAN.detect = await scanDetektor();
+  let code = await SCAN.basis(c); const kand = new Map();
+  for (const hh of [0.34, 0.2]) for (let y0 = 0; y0 + hh <= 1.001 && !code; y0 += hh * 0.6) for (const W of [1000, 560]) {
+    const sc = W / c.width, s = document.createElement('canvas'); s.width = W; s.height = Math.max(20, Math.round(c.height * hh * sc));
+    s.getContext('2d').drawImage(c, 0, -Math.round(c.height * Math.min(y0, 1 - hh) * sc), W, c.height * sc);
+    await new Promise(r => setTimeout(r, 0)); code = await SCAN.basis(s);
+    for (let k = 0; k < SCAN_NVAR && !code; k++) { const r = await SCAN.basis(scanVariante(s, k)); if (r) { if (kand.has(r)) code = r; else kand.set(r, 1); } }
+  }
+  return code ? String(code).trim() : null;
+}
+$('fotobtn').onclick = () => $('fotodatei').click();
+$('fotodatei').onchange = async ev => {
+  const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
+  meld('fmeld', 'Foto wird ausgewertet … das kann einige Sekunden dauern.');
+  let c; try { c = await bildLaden(f, 2000); } catch (e) { meld('fmeld', 'Foto konnte nicht geöffnet werden.', 'warn'); return; }
+  let bc = null, text = '', fehler = '';
+  try { bc = await barcodeInBild(c); } catch (e) { /* ohne Barcode */ }
+  try { text = await ocrText(c); } catch (e) { fehler = e.message || String(e); }
+  const o = text ? parseSchein(text) : {}, b = bc ? zahlenSplit(bc) : null; let hinweis = '';
+  if (b) { if (o.nr && o.nr !== b.nr) hinweis = ' Barcode (' + esc(b.nr) + ') und Text (' + esc(o.nr) + ') weichen ab – bitte prüfen.'; o.nr = b.nr; if (b.jahr) o.jahr = b.jahr; }
+  const n = Object.keys(o).length;
+  if (!n) { meld('fmeld', (fehler ? esc(fehler) + ' ' : '') + 'Nichts erkannt – näher heran, mehr Licht, den ganzen Schein gerade im Bild. Oder Felder von Hand ausfüllen.', 'warn'); return; }
+  formSetzen(o);
+  meld('fmeld', '✔ ' + n + ' Felder gelesen' + (b ? ' (Rep.-Nr. aus Barcode)' : '') + '. Bitte kurz prüfen, dann speichern.' + hinweis, hinweis ? 'warn' : 'ok');
+};
+$('barbtn').onclick = () => openScan('rep', 'Barcode vom Reparaturschein', code => {
+  const b = zahlenSplit(code); if (!b) return { ok: false, html: 'Code <b>' + esc(code) + '</b> ist keine Reparaturnummer' };
+  $('f_nr').value = b.nr; if (b.jahr) $('f_jahr').value = b.jahr; meld('fmeld', '✔ Rep.-Nr. ' + esc(b.nr) + ' aus Barcode übernommen. Weitere Felder von Hand ausfüllen oder den Schein fotografieren.', 'ok');
+  return { ok: true, html: '✔ Rep.-Nr. <b>' + esc(b.nr) + '</b>', schliessen: true };
+});
+$('speichern').onclick = () => {
+  const f = formLesen(); if (!f.nr) { meld('fmeld', 'Bitte die Rep.-Nr. eintragen (oder Barcode scannen / Schein fotografieren).', 'warn'); return; }
+  let r = EDIT ? repById(EDIT) : DB.rep.find(x => x.nr === f.nr && (x.jahr || '') === (f.jahr || '')), neu = false;
+  if (!r) { r = { id: uid(), status: 'erfasst', erfasst: nu(), sendung: null, hist: [] }; DB.rep.push(r); neu = true; logR(r, 'Erfasst'); } else logR(r, 'Geändert');
+  Object.assign(r, f); sichern(); formLeeren();
+  meld('fmeld', neu ? '✔ Gespeichert: Rep. ' + esc(f.nr) : '✔ Rep. ' + esc(f.nr) + ' war schon vorhanden und wurde aktualisiert.', 'ok'); render();
+};
+
+/* ---------------------------------------------------------- Anzeige */
+function repKarte(r, opt) {
+  const s = r.sendung ? sen(r.sendung) : null;
+  return '<div class="rep" data-id="' + r.id + '">' + (opt.wahl ? '<label class="wahl"><input type="checkbox" class="wahlbox" value="' + r.id + '"' + (opt.vorhaken ? ' checked' : '') + (opt.sperre ? ' disabled' : '') + '><span style="flex:1">' : '<div>')
+    + '<div class="kopf"><span class="nr">' + esc(r.nr) + (r.jahr ? ' / ' + esc(r.jahr) : '') + '</span><span class="chip ' + r.status + '">' + STATUS[r.status] + '</span></div>'
+    + '<div>' + esc(r.kunde || '–') + '</div><div class="klein">' + [r.material && 'Mat. ' + esc(r.material), r.serien && 'SN ' + esc(r.serien), r.techniker && esc(r.techniker)].filter(Boolean).join(' · ') + '</div>'
+    + (opt.sendung && s ? '<div class="klein">Sendung ' + esc(s.code) + (s.gw ? ' · GW ' + esc(s.gw) : '') + ' · ' + esc(s.von) + ' → ' + esc(s.nach) + '</div>' : '')
+    + (opt.wahl ? '</span></label>' : '</div>') + (opt.extra || '') + '</div>';
+}
+function render() {
+  const erf = DB.rep.filter(r => r.status === 'erfasst').sort((a, b) => b.erfasst.localeCompare(a.erfasst));
+  $('z_erf').textContent = erf.length || ''; $('z_ver').textContent = DB.sen.length || ''; $('z_ein').textContent = DB.sen.filter(s => s.status !== 'angenommen').length || ''; $('z_ges').textContent = DB.rep.length || '';
+  $('erf_anz').textContent = erf.length ? '(' + erf.length + ')' : '';
+  const act = r => '<div class="aktionen"><button type="button" data-a="edit" data-id="' + r.id + '">Bearbeiten</button><button type="button" data-a="del" data-id="' + r.id + '">Löschen</button></div>';
+  $('erf_liste').innerHTML = erf.length ? erf.map(r => repKarte(r, { extra: act(r) })).join('') : '<p class="leer">Noch nichts erfasst.</p>';
+  // Versand
+  const ge = [...$('ver_liste').querySelectorAll('.wahlbox:checked')].map(x => x.value);
+  $('ver_liste').innerHTML = erf.length ? erf.map(r => repKarte(r, { wahl: true, vorhaken: ge.includes(r.id) })).join('') : '<p class="leer">Keine erfassten Reparaturen – erst im Reiter „Erfassen“ speichern.</p>';
+  const v = DB.set.von, n = DB.set.nach, rs = $('v_richtung').value || '0';
+  $('v_richtung').innerHTML = '<option value="0">' + esc(v) + ' → ' + esc(n) + '</option><option value="1">' + esc(n) + ' → ' + esc(v) + '</option>'; $('v_richtung').value = rs;
+  const sl = [...DB.sen].sort((a, b) => b.erstellt.localeCompare(a.erstellt));
+  $('sen_liste').innerHTML = sl.length ? sl.map(s => '<div class="rep"><div class="kopf"><span class="sendungskopf">' + esc(s.code) + '</span><span class="chip ' + (s.status === 'angenommen' ? 'angenommen' : s.status === 'teilweise' ? 'fehlt' : 'versendet') + '">' + (s.status === 'angenommen' ? 'Angenommen' : s.status === 'teilweise' ? 'Teilweise' : 'Unterwegs') + '</span></div>'
+    + '<div class="klein">' + esc(s.von) + ' → ' + esc(s.nach) + ' · ' + esc(s.art) + ' · ' + s.reps.length + ' Reparaturen · ' + zeit(s.erstellt) + '</div>'
+    + '<div class="zeile" style="margin-top:8px"><input type="text" class="gwfeld" data-code="' + esc(s.code) + '" value="' + esc(s.gw || '') + '" placeholder="GW-Sendungsnummer" spellcheck="false"><button type="button" data-a="gw" data-code="' + esc(s.code) + '">GW speichern</button></div>'
+    + '<div class="aktionen"><button type="button" data-a="pdf" data-code="' + esc(s.code) + '">Packliste (PDF)</button></div></div>').join('') : '<p class="leer">Noch keine Sendung angelegt.</p>';
+  renderEingang(); renderUebersicht();
+  $('s_von').value = DB.set.von; $('s_nach').value = DB.set.nach; $('s_ma').value = DB.set.ma;
+}
+$('erf_liste').addEventListener('click', e => {
+  const b = e.target.closest('button[data-a]'); if (!b) return; const r = repById(b.dataset.id); if (!r) return;
+  if (b.dataset.a === 'edit') { formSetzen(r); EDIT = r.id; $('speichern').textContent = 'Änderung speichern'; window.scrollTo({ top: 0, behavior: 'smooth' }); meld('fmeld', 'Rep. ' + esc(r.nr) + ' wird bearbeitet.'); }
+  if (b.dataset.a === 'del' && confirm('Rep. ' + r.nr + ' wirklich löschen?')) { DB.rep = DB.rep.filter(x => x.id !== r.id); sichern(); render(); }
+});
+
+/* ---------------------------------------------------------- Packliste (PDF) */
+const latin = s => String(s == null ? '' : s).replace(/²/g, '2').replace(/³/g, '3').replace(/[^ -ÿ€–—„“”‚‘’…]/g, '?').replace(/[–—]/g, '-').replace(/[„“”]/g, '"').replace(/[‚‘’]/g, "'").replace(/…/g, '...').replace(/€/g, 'EUR');
+function barcodeZeichnen(d, text, x, y, bw, bh) { let px = x; d.setFillColor(0); for (const c of code128(text)) { const p = PAT[c]; for (let k = 0; k < p.length; k++) { const w = +p[k] * bw; if (k % 2 === 0) d.rect(px, y, w, bh, 'F'); px += w; } } return px - x; }
+function barcodeBreite(text, bw) { let n = 0; for (const c of code128(text)) for (const ch of PAT[c]) n += +ch; return n * bw; }
+function packliste(s) {
+  const { jsPDF } = window.jspdf, d = new jsPDF({ unit: 'mm', format: 'a4' }), M = 15, W = 210;
+  const kopf = () => { d.setFont('helvetica', 'bold'); d.setFontSize(10); d.setFillColor(235); d.rect(M, y - 5, W - 2 * M, 8, 'F'); d.text('Pos', M + 2, y); d.text('Rep.-Nr.', M + 14, y); d.text('Kunde', M + 38, y); d.text('Material', M + 100, y); d.text('Seriennummer', M + 128, y); y += 8; };
+  let y = 18; d.setFont('helvetica', 'bold'); d.setFontSize(20); d.text('Packliste Reparaturen', M, y);
+  const bw = 0.42, bbr = barcodeBreite(s.code, bw); barcodeZeichnen(d, s.code, W - M - bbr, 10, bw, 16); d.setFontSize(12); d.text(latin(s.code), W - M - bbr / 2, 31, { align: 'center' });
+  d.setFont('helvetica', 'normal'); d.setFontSize(11); y = 30;
+  const zl = (a, b) => { d.setFont('helvetica', 'bold'); d.text(a, M, y); d.setFont('helvetica', 'normal'); d.text(latin(b), M + 42, y); y += 6; };
+  zl('Datum:', zeit(s.erstellt)); zl('Von / nach:', s.von + '  ->  ' + s.nach); zl('Behälter:', s.art); zl('GW-Sendungsnr.:', s.gw || '-'); zl('Anzahl:', s.reps.length + ' Reparaturen');
+  y += 8; kopf(); d.setFontSize(10.5);
+  s.reps.forEach((id, i) => {
+    const r = repById(id); if (!r) return; if (y > 268) { d.addPage(); y = 20; kopf(); d.setFontSize(10.5); }
+    d.setFont('helvetica', 'normal'); d.text(String(i + 1), M + 2, y); d.setFont('helvetica', 'bold'); d.text(latin(r.nr + (r.jahr ? '/' + r.jahr.slice(2) : '')), M + 14, y); d.setFont('helvetica', 'normal');
+    d.text(d.splitTextToSize(latin(r.kunde || '-'), 60)[0], M + 38, y); d.text(latin(r.material || '-'), M + 100, y); d.text(latin(r.serien || '-'), M + 128, y);
+    y += 3; d.setDrawColor(210); d.line(M, y, W - M, y); y += 6;
+  });
+  y += 6; if (y > 255) { d.addPage(); y = 25; } d.setFont('helvetica', 'bold'); d.setFontSize(11); d.text('Gesamt: ' + s.reps.length + ' Reparaturen', M, y);
+  y += 16; d.setFont('helvetica', 'normal'); d.text('Angenommen am: ______________   von: ______________________   Unterschrift: ______________', M, y);
+  return { blob: d.output('blob'), name: 'Packliste_' + s.code + '.pdf' };
+}
+function speichernDatei(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
+async function pdfAusgeben(r, titel) {
+  const file = new File([r.blob], r.name, { type: 'application/pdf' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: titel }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  speichernDatei(r.blob, r.name);
+}
+
+/* ---------------------------------------------------------- Versand */
+$('v_anlegen').onclick = async () => {
+  const ids = [...$('ver_liste').querySelectorAll('.wahlbox:checked')].map(x => x.value);
+  if (!ids.length) { meld('v_meld', 'Bitte mindestens eine Reparatur ankreuzen.', 'warn'); return; }
+  const rev = $('v_richtung').value === '1', von = rev ? DB.set.nach : DB.set.von, nach = rev ? DB.set.von : DB.set.nach, d = new Date(), p2 = x => String(x).padStart(2, '0');
+  const pre = 'S' + String(d.getFullYear()).slice(2) + p2(d.getMonth() + 1) + p2(d.getDate()) + '-'; let nr = 1; while (sen(pre + p2(nr))) nr++;
+  const s = { code: pre + p2(nr), von, nach, art: $('v_art').value, gw: $('v_gw').value.trim(), erstellt: nu(), status: 'versendet', reps: ids };
+  DB.sen.push(s); for (const id of ids) { const r = repById(id); r.status = 'versendet'; r.sendung = s.code; logR(r, 'Versendet in Sendung ' + s.code + ' (' + von + ' → ' + nach + ')'); }
+  sichern(); $('v_gw').value = ''; render();
+  meld('v_meld', '✔ Sendung <b>' + esc(s.code) + '</b> angelegt (' + ids.length + ' Reparaturen). Packliste mit Barcode wird erstellt – bitte ausdrucken und an die Box legen.', 'ok');
+  await pdfAusgeben(packliste(s), 'Packliste ' + s.code);
+};
+$('sen_liste').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-a]'); if (!b) return; const s = sen(b.dataset.code); if (!s) return;
+  if (b.dataset.a === 'pdf') await pdfAusgeben(packliste(s), 'Packliste ' + s.code);
+  if (b.dataset.a === 'gw') { const v = b.parentElement.querySelector('.gwfeld').value.trim(); s.gw = v; for (const id of s.reps) logR(repById(id) || {}, 'GW-Nr. ' + v); sichern(); b.textContent = '✔ gespeichert'; setTimeout(() => { b.textContent = 'GW speichern'; }, 1500); }
+});
+
+/* ---------------------------------------------------------- Eingang */
+function eingangLaden(code) {
+  code = String(code || '').trim().toUpperCase(); const s = DB.sen.find(x => x.code.toUpperCase() === code);
+  if (!s) { meld('e_meld', 'Keine Sendung mit dem Code <b>' + esc(code) + '</b> gefunden. (Testversion: die Sendung muss auf diesem Gerät angelegt oder geladen sein.)', 'warn'); return false; }
+  EIN = s.code; meld('e_meld', ''); renderEingang(); return true;
+}
+function renderEingang() {
+  const box = $('e_box'), s = EIN && sen(EIN); box.hidden = !s; if (!s) return;
+  const offen = s.status !== 'angenommen';
+  box.innerHTML = '<div class="sendungskopf">' + esc(s.code) + '</div><div class="klein" style="color:var(--grau)">' + esc(s.von) + ' → ' + esc(s.nach) + ' · ' + esc(s.art) + (s.gw ? ' · GW ' + esc(s.gw) : '') + '</div>'
+    + (offen ? '<p class="hinweis">Alles, was in der Box angekommen ist, bleibt angehakt. Fehlendes bitte abhaken.</p>' : '<p class="hinweis">Diese Sendung wurde bereits angenommen (' + zeit(s.angenommenAm) + (s.angenommenVon ? ', ' + esc(s.angenommenVon) : '') + ').</p>')
+    + s.reps.map(id => repById(id)).filter(Boolean).map(r => repKarte(r, { wahl: true, vorhaken: r.status !== 'fehlt', sperre: !offen || r.status === 'angenommen' })).join('')
+    + (offen ? '<label class="feld" style="margin-top:12px">Angenommen von<input type="text" id="e_ma" value="' + esc(DB.set.ma) + '" autocomplete="off"></label><button type="button" class="haupt" id="e_annehmen">Annehmen</button>' : '');
+}
+$('e_box').addEventListener('click', e => {
+  if (e.target.id !== 'e_annehmen') return; const s = sen(EIN); if (!s) return; const ma = ($('e_ma').value || '').trim(); DB.set.ma = ma;
+  const boxen = [...$('e_box').querySelectorAll('.wahlbox')]; let fehlt = 0;
+  for (const bx of boxen) { const r = repById(bx.value); if (!r || r.status === 'angenommen') continue; if (bx.checked) { r.status = 'angenommen'; logR(r, 'Angenommen' + (ma ? ' von ' + ma : '')); } else { r.status = 'fehlt'; fehlt++; logR(r, 'Beim Eingang nicht in der Box'); } }
+  s.status = fehlt ? 'teilweise' : 'angenommen'; s.angenommenAm = nu(); s.angenommenVon = ma; sichern(); render();
+  meld('e_meld', fehlt ? '⚠ Sendung ' + esc(s.code) + ' teilweise angenommen – ' + fehlt + ' fehlen.' : '✔ Sendung ' + esc(s.code) + ' vollständig angenommen.', fehlt ? 'warn' : 'ok');
+});
+$('e_ok').onclick = () => eingangLaden($('e_code').value);
+$('e_code').addEventListener('keydown', e => { if (e.key === 'Enter') eingangLaden($('e_code').value); });
+$('e_scan').onclick = () => openScan('sendung', 'Code der Sendung (Packliste)', code => {
+  const s = DB.sen.find(x => x.code.toUpperCase() === code.toUpperCase());
+  if (s) { eingangLaden(s.code); return { ok: true, html: '✔ Sendung <b>' + esc(s.code) + '</b> (' + s.reps.length + ' Reparaturen)', schliessen: true }; }
+  const b = zahlenSplit(code), r = b && DB.rep.find(x => x.nr === b.nr);
+  if (r && r.sendung) { eingangLaden(r.sendung); return { ok: true, html: '✔ Rep. <b>' + esc(r.nr) + '</b> gehört zu Sendung ' + esc(r.sendung), schliessen: true }; }
+  return { ok: false, html: 'Code <b>' + esc(code) + '</b> ist unbekannt' };
+});
+
+/* ---------------------------------------------------------- Übersicht */
+function renderUebersicht() {
+  const q = $('q').value.toLowerCase().split(/\s+/).filter(Boolean);
+  const alle = DB.rep.filter(r => { if (FILTER && r.status !== FILTER) return false; const s = r.sendung ? sen(r.sendung) : null;
+    const hay = [r.nr, r.jahr, r.kunde, r.kundennr, r.material, r.serien, r.techniker, r.grund, s && s.code, s && s.gw, s && s.von, s && s.nach].join(' ').toLowerCase(); return q.every(w => hay.includes(w)); })
+    .sort((a, b) => b.erfasst.localeCompare(a.erfasst));
+  const lim = alle.slice(0, 200);
+  $('u_liste').innerHTML = lim.length ? lim.map(r => repKarte(r, { sendung: true, extra: r.id === OFFEN ? '<div class="historie">' + (r.hist || []).map(h => zeit(h.t) + ' – ' + esc(h.x)).join('<br>') + '</div>'
+    + '<div class="aktionen"><select data-a="stat" data-id="' + r.id + '" style="width:auto">' + Object.entries(STATUS).map(([k, v]) => '<option value="' + k + '"' + (k === r.status ? ' selected' : '') + '>Status: ' + v + '</option>').join('') + '</select>'
+    + '<button type="button" data-a="edit" data-id="' + r.id + '">Bearbeiten</button><button type="button" data-a="del" data-id="' + r.id + '">Löschen</button></div>' : '' })).join('') + (alle.length > 200 ? '<p class="hinweis">Nur die ersten 200 von ' + alle.length + ' – bitte genauer suchen.</p>' : '') : '<p class="leer">Keine Treffer.</p>';
+}
+$('q').addEventListener('input', renderUebersicht);
+$('filter').addEventListener('click', e => { const b = e.target.closest('button[data-s]'); if (!b) return; FILTER = b.dataset.s; document.querySelectorAll('#filter button').forEach(x => x.classList.toggle('an', x === b)); renderUebersicht(); });
+$('u_liste').addEventListener('click', e => {
+  const b = e.target.closest('button[data-a]'), k = e.target.closest('.rep'); if (e.target.closest('select')) return;
+  if (b) { const r = repById(b.dataset.id); if (!r) return;
+    if (b.dataset.a === 'edit') { formSetzen(r); EDIT = r.id; $('speichern').textContent = 'Änderung speichern'; tab('erfassen'); window.scrollTo({ top: 0 }); meld('fmeld', 'Rep. ' + esc(r.nr) + ' wird bearbeitet.'); }
+    if (b.dataset.a === 'del' && confirm('Rep. ' + r.nr + ' wirklich löschen?')) { DB.rep = DB.rep.filter(x => x.id !== r.id); for (const s of DB.sen) s.reps = s.reps.filter(i => i !== r.id); sichern(); render(); }
+    return; }
+  if (k) { OFFEN = OFFEN === k.dataset.id ? null : k.dataset.id; renderUebersicht(); }
+});
+$('u_liste').addEventListener('change', e => { const s = e.target.closest('select[data-a="stat"]'); if (!s) return; const r = repById(s.dataset.id); if (!r) return; r.status = s.value; logR(r, 'Status von Hand auf „' + STATUS[r.status] + '“ gesetzt'); sichern(); render(); });
+$('u_csv').onclick = () => {
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"', kopf = ['Rep.-Nr.', 'Jahr', 'Kunde', 'Kundennr.', 'Material', 'Seriennummer', 'Techniker', 'Datum', 'Auftragsgrund', 'Status', 'Sendung', 'GW-Nr.', 'Von', 'Nach', 'Angenommen am', 'Angenommen von'];
+  const z = DB.rep.map(r => { const s = r.sendung ? sen(r.sendung) : null; return [r.nr, r.jahr, r.kunde, r.kundennr, r.material, r.serien, r.techniker, r.datum, r.grund, STATUS[r.status], s && s.code, s && s.gw, s && s.von, s && s.nach, s && s.angenommenAm ? zeit(s.angenommenAm) : '', s && s.angenommenVon].map(q).join(';'); });
+  speichernDatei(new Blob(['﻿' + [kopf.map(q).join(';'), ...z].join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'Reparaturen_' + new Date().toISOString().slice(0, 10) + '.csv');
+};
+
+/* ---------------------------------------------------------- Einstellungen / Daten */
+for (const [id, k] of [['s_von', 'von'], ['s_nach', 'nach'], ['s_ma', 'ma']]) $(id).addEventListener('change', () => { DB.set[k] = $(id).value.trim() || DB.set[k]; sichern(); render(); });
+$('d_sichern').onclick = () => speichernDatei(new Blob([JSON.stringify(DB)], { type: 'application/json' }), 'Reparaturen_Sicherung_' + new Date().toISOString().slice(0, 10) + '.json');
+$('d_laden').onclick = () => $('d_datei').click();
+$('d_datei').onchange = async ev => {
+  const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
+  try { const d = JSON.parse(await f.text()); if (!d.rep || !d.sen) throw 0;
+    if (!confirm('Sicherung mit ' + d.rep.length + ' Reparaturen laden? Vorhandene Daten werden mit der Sicherung zusammengeführt (Neueres bleibt).')) return;
+    for (const r of d.rep) { const x = repById(r.id); if (!x) DB.rep.push(r); else if ((r.hist || []).length >= (x.hist || []).length) Object.assign(x, r); }
+    for (const s of d.sen) { const x = sen(s.code); if (!x) DB.sen.push(s); else if (JSON.stringify(s) !== JSON.stringify(x) && (s.angenommenAm || '') >= (x.angenommenAm || '')) Object.assign(x, s); }
+    sichern(); render(); alert('Sicherung geladen.'); } catch (e) { alert('Das ist keine gültige Sicherungsdatei.'); }
+};
+
+/* ---------------------------------------------------------- Scanner-Anbindung */
+function openScan(modus, titel, onCode) { SCAN.onCode = onCode; $('scanoben').innerHTML = '<b>' + esc(titel) + '</b> – Barcode in den Rahmen halten'; scanStart(); }
+function scanTreffer(code) {
+  const jetzt = Date.now(); if (code === SCAN.letzter && jetzt - SCAN.letzteZeit < 2200) { SCAN.letzteZeit = jetzt; return; }
+  SCAN.letzter = code; SCAN.letzteZeit = jetzt; const r = SCAN.onCode ? SCAN.onCode(code) : { ok: false, html: esc(code) };
+  scanPiep(r.ok); scanMeldung(r.html, r.ok ? 'treffer' : 'fehler'); if (r.ok && r.schliessen) setTimeout(() => scanStop(true), 700);
+}
+function scanStop() { SCAN.laeuft = false; SCAN.detect = null; if (SCAN.stream) { SCAN.stream.getTracks().forEach(t => t.stop()); SCAN.stream = null; } $('scanvideo').srcObject = null; $('scan').hidden = true; }
+$('scanfoto').onclick = () => $('scanfotodatei').click();
+$('scanfotodatei').onchange = async ev => {
+  const f = ev.target.files[0]; ev.target.value = ''; if (!f) return; scanMeldung('Foto wird ausgewertet …');
+  try { const c = await bildLaden(f, 1500), code = await barcodeInBild(c); if (code) { SCAN.letzter = ''; scanTreffer(code); } else scanMeldung('Im Foto kein Barcode erkannt – näher heran, mehr Licht, gerade halten.', 'fehler'); }
+  catch (e) { scanMeldung('Foto konnte nicht ausgewertet werden.', 'fehler'); }
+};
+$('scanfertig').onclick = () => scanStop();
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('scan').hidden) scanStop(); });
+
+laden(); render(); ladeDaten();
+
+/* ---------------------------------------------------------- Code 128 */
+const PAT = "212222,222122,222221,121223,121322,131222,122213,122312,132212,221213,221312,231212,112232,122132,122231,113222,123122,123221,223211,221132,221231,213212,223112,312131,311222,321122,321221,312212,322112,322211,212123,212321,232121,111323,131123,131321,112313,132113,132311,211313,231113,231311,112133,112331,132131,113123,113321,133121,313121,211331,231131,213113,213311,213131,311123,311321,331121,312113,312311,332111,314111,221411,431111,111224,111422,121124,121421,141122,141221,112214,112412,122114,122411,142112,142211,241211,221114,413111,241112,134111,111242,121142,121241,114212,124112,124211,411212,421112,421211,212141,214121,412121,111143,111341,131141,114113,114311,411113,411311,113141,114131,311141,411131,211412,211214,211232,2331112".split(',');
+function code128(s) {
+  const out = [], n = s.length;
+  const run = j => { let k = 0; while (j + k < n && s[j + k] >= '0' && s[j + k] <= '9') k++; return k; };
+  let mode = 'B', i = 0;
+  const r0 = run(0);
+  if (r0 >= 4 || (r0 === n && r0 >= 2)) { out.push(105); mode = 'C'; } else out.push(104);
+  while (i < n) {
+    const r = run(i);
+    if (mode === 'C') {
+      if (r >= 2) { out.push(+s.substr(i, 2)); i += 2; } else { out.push(100); mode = 'B'; }
+      continue;
+    }
+    if (r >= 4) {
+      if (r % 2 === 1) { out.push(s.charCodeAt(i) - 32); i++; }
+      out.push(99); mode = 'C'; continue;
+    }
+    let c = s.charCodeAt(i) - 32; if (c < 0 || c > 94) c = '?'.charCodeAt(0) - 32;
+    out.push(c); i++;
+  }
+  let sum = out[0]; for (let k = 1; k < out.length; k++) sum += k * out[k];
+  out.push(sum % 103, 106);
+  return out;
+}
+
+/* ---------------------------------------------------------- Scanner-Engine (wie bei den Etiketten) */
+const SCAN = { stream: null, laeuft: false, stack: [], letzter: '', letzteZeit: 0, audio: null, detect: null };
+function scanPiep(ok) {
+  try { SCAN.audio = SCAN.audio || new (window.AudioContext || window.webkitAudioContext)(); const o = SCAN.audio.createOscillator(), g = SCAN.audio.createGain();
+    o.frequency.value = ok ? 1500 : 300; g.gain.value = 0.15; o.connect(g); g.connect(SCAN.audio.destination); o.start(); o.stop(SCAN.audio.currentTime + (ok ? 0.09 : 0.25)); } catch (e) { /* ohne Ton */ }
+  try { navigator.vibrate && navigator.vibrate(ok ? 60 : [40, 60, 40]); } catch (e) { /* ohne Vibration */ }
+}
+function scanMeldung(html, art) { $('scanmeldung').innerHTML = html; const r = $('scanrahmen'); r.classList.remove('treffer', 'fehler'); if (art) { r.classList.add(art); setTimeout(() => r.classList.remove('treffer', 'fehler'), 700); } }
+/* --- Kontrastarme / verblasste Etiketten: Bildaufbereitung vor dem Dekodieren --- */
+function scanGrauCanvas(c) {
+  const w = c.width, h = c.height, d = c.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h).data, g = new Uint8ClampedArray(w * h);
+  for (let i = 0, j = 0; i < g.length; i++, j += 4) g[i] = (d[j] * 77 + d[j + 1] * 150 + d[j + 2] * 29) >> 8;
+  return { g, w, h };
+}
+function scanBild(G) {
+  const c = document.createElement('canvas'); c.width = G.w; c.height = G.h; const x = c.getContext('2d'), im = x.createImageData(G.w, G.h);
+  for (let i = 0, j = 0; i < G.g.length; i++, j += 4) { im.data[j] = im.data[j + 1] = im.data[j + 2] = G.g[i]; im.data[j + 3] = 255; }
+  x.putImageData(im, 0, 0); return c;
+}
+function scanDehnen(G) {            // Kontrast auf 1%–99% der Helligkeiten strecken
+  const hist = new Uint32Array(256); for (let i = 0; i < G.g.length; i++) hist[G.g[i]]++;
+  const n = G.g.length; let lo = 0, hi = 255, s = 0;
+  for (let v = 0; v < 256; v++) { s += hist[v]; if (s > n * 0.01) { lo = v; break; } }
+  s = 0; for (let v = 255; v >= 0; v--) { s += hist[v]; if (s > n * 0.01) { hi = v; break; } }
+  if (hi - lo < 10) hi = Math.min(255, lo + 10);
+  const f = 255 / (hi - lo), o = new Uint8ClampedArray(n); for (let i = 0; i < n; i++) o[i] = (G.g[i] - lo) * f;
+  return { g: o, w: G.w, h: G.h };
+}
+function scanIntegral(G) {
+  const w = G.w, h = G.h, I = new Float64Array((w + 1) * (h + 1));
+  for (let y = 0; y < h; y++) { let r = 0; for (let x = 0; x < w; x++) { r += G.g[y * w + x]; I[(y + 1) * (w + 1) + x + 1] = I[y * (w + 1) + x + 1] + r; } }
+  return I;
+}
+function scanMittel(G, I, r) {      // lokaler Mittelwert (Box-Filter, Radius r)
+  const w = G.w, h = G.h, M = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) { const y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1);
+    for (let x = 0; x < w; x++) { const x0 = Math.max(0, x - r), x1 = Math.min(w, x + r + 1);
+      M[y * w + x] = (I[y1 * (w + 1) + x1] - I[y0 * (w + 1) + x1] - I[y1 * (w + 1) + x0] + I[y0 * (w + 1) + x0]) / ((x1 - x0) * (y1 - y0)); } }
+  return M;
+}
+function scanSchaerfen(G) {         // Unsharp-Mask gegen Unschärfe
+  const M = scanMittel(G, scanIntegral(G), 2), o = new Uint8ClampedArray(G.g.length);
+  for (let i = 0; i < o.length; i++) o[i] = G.g[i] + 2.2 * (G.g[i] - M[i]);
+  return { g: o, w: G.w, h: G.h };
+}
+function scanSchwelle(G, bias) {    // lokale Schwarz-Weiß-Schwelle (gegen Schatten/Verlauf)
+  const r = Math.max(10, Math.round(G.w / 14)), M = scanMittel(G, scanIntegral(G), r), o = new Uint8ClampedArray(G.g.length);
+  for (let i = 0; i < o.length; i++) o[i] = G.g[i] < M[i] - bias ? 0 : 255;
+  return { g: o, w: G.w, h: G.h };
+}
+function scanVertikal(G, r) {      // Rauschen mitteln: senkrecht über benachbarte Zeilen (Strichcode-Striche sind senkrecht)
+  const w = G.w, h = G.h, o = new Uint8ClampedArray(w * h), col = new Float64Array(h + 1);
+  for (let x = 0; x < w; x++) { for (let y = 0; y < h; y++) col[y + 1] = col[y] + G.g[y * w + x];
+    for (let y = 0; y < h; y++) { const y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1); o[y * w + x] = (col[y1] - col[y0]) / (y1 - y0); } }
+  return { g: o, w, h };
+}
+function scanEben(G) {             // Helligkeitsverlauf/Schatten herausrechnen, dann Kontrast strecken
+  const M = scanMittel(G, scanIntegral(G), Math.max(10, Math.round(G.w / 10))), D = new Float32Array(G.g.length);
+  let mn = 1e9, mx = -1e9; for (let i = 0; i < D.length; i++) { D[i] = G.g[i] - M[i]; }
+  const hist = new Uint32Array(512); for (let i = 0; i < D.length; i++) hist[Math.max(0, Math.min(511, Math.round(D[i]) + 256))]++;
+  let s = 0, lo = -10, hi = 10; for (let v = 0; v < 512; v++) { s += hist[v]; if (s > D.length * 0.02) { lo = v - 256; break; } }
+  s = 0; for (let v = 511; v >= 0; v--) { s += hist[v]; if (s > D.length * 0.02) { hi = v - 256; break; } }
+  if (hi - lo < 6) { lo -= 3; hi += 3; }
+  const o = new Uint8ClampedArray(D.length), f = 255 / (hi - lo); for (let i = 0; i < o.length; i++) o[i] = (D[i] - lo) * f;
+  return { g: o, w: G.w, h: G.h };
+}
+function scanHoch(c, f) { const o = document.createElement('canvas'); o.width = Math.round(c.width * f); o.height = Math.round(c.height * f);
+  const x = o.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(c, 0, 0, o.width, o.height); return o; }
+const SCAN_NVAR = 7;
+function scanVariante(c, k) {       // eine Aufbereitung pro Kamerabild (reihum), damit der Scanner flüssig bleibt
+  const G0 = scanGrauCanvas(c), r = Math.max(2, Math.round(G0.h / 12));
+  if (k >= 5) { const c2 = scanHoch(c, 2), V2 = scanVertikal(scanGrauCanvas(c2), r * 2);
+    return scanBild(k === 5 ? scanSchaerfen(scanDehnen(V2)) : scanSchaerfen(scanEben(V2))); }
+  const V = scanVertikal(G0, r);
+  if (k === 0) return scanBild(scanDehnen(V));
+  if (k === 1) return scanBild(scanEben(V));
+  if (k === 2) return scanBild(scanSchaerfen(scanEben(V)));
+  if (k === 3) return scanBild(scanSchaerfen(scanDehnen(V)));
+  return scanBild(scanSchwelle(scanDehnen(V), 0));
+}
+function scanMitVarianten(basis) {   // Treffer aus aufbereiteten Bildern gelten erst, wenn derselbe Code kurz darauf nochmal gelesen wird (gegen Fehlerkennung)
+  let n = 0; const kand = new Map();
+  return async c => { let r = await basis(c); if (r) return r;
+    r = await basis(scanVariante(c, n++ % SCAN_NVAR)); if (!r) return null;
+    const t = Date.now(), e = kand.get(r); kand.set(r, t);
+    if (e && t - e < 4000) { kand.delete(r); return r; } return null; };
+}
+
+async function scanDetektor() { SCAN.basis = await scanDetektorBasis(); return scanMitVarianten(SCAN.basis); }
+async function scanDetektorBasis() {
+  if ('BarcodeDetector' in window) {
+    try { const f = await BarcodeDetector.getSupportedFormats();
+      if (f.includes('code_128')) { const det = new BarcodeDetector({ formats: ['code_128', 'code_39', 'ean_13', 'ean_8'].filter(x => f.includes(x)) });
+        return async c => { const r = await det.detect(c); return r.length ? r[0].rawValue : null; }; } } catch (e) { /* Fallback */ }
+  }
+  if (!window.ZXing) await new Promise((ok, err) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+    sc.onload = ok; sc.onerror = () => err(new Error('Scanner-Bibliothek konnte nicht geladen werden (Internet?)')); document.head.appendChild(sc); });
+  const Z = window.ZXing, hints = new Map();
+  hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.CODE_39, Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8]); hints.set(Z.DecodeHintType.TRY_HARDER, true);
+  const reader = new Z.MultiFormatReader(); reader.setHints(hints);
+  return async c => { try { return reader.decode(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(c)))).getText(); } catch (e) { return null; } };
+}
+async function scanStart() {
+  const ov = $('scan'), video = $('scanvideo'); SCAN.stack = []; SCAN.letzter = ''; ov.hidden = false; scanMeldung('Kamera wird gestartet …');
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Kamera-Zugriff nicht möglich (nur über https).');
+    SCAN.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+    video.srcObject = SCAN.stream; await video.play(); scanKameraOptionen(); SCAN.detect = await scanDetektor();
+  } catch (e) { scanStop(false); alert('Scanner nicht verfügbar: ' + (e.message || e) + '\n\nTipp: Kamera für diese Seite erlauben, oder die Artikelnummer eintippen.'); return; }
+  scanMeldung('Barcode in den Rahmen halten …'); SCAN.laeuft = true;
+  const cv = document.createElement('canvas'), ctx = cv.getContext('2d', { willReadFrequently: true });
+  const schleife = async () => {
+    if (!SCAN.laeuft) return;
+    try {
+      const vw = video.videoWidth, vh = video.videoHeight;
+      if (vw) {
+        const cr = ov.getBoundingClientRect(), fr = $('scanrahmen').getBoundingClientRect();
+        const sc = Math.max(cr.width / vw, cr.height / vh), ox = (cr.width - vw * sc) / 2, oy = (cr.height - vh * sc) / 2;
+        const sx = Math.max(0, (fr.left - cr.left - ox) / sc), sy = Math.max(0, (fr.top - cr.top - oy) / sc);
+        const sw = Math.min(vw - sx, fr.width / sc), sh = Math.min(vh - sy, fr.height / sc), f = Math.min(1, 1000 / sw);
+        cv.width = Math.round(sw * f); cv.height = Math.round(sh * f); ctx.drawImage(video, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
+        const code = await SCAN.detect(cv); if (code) scanTreffer(String(code).trim());
+      }
+    } catch (e) { /* nächster Versuch */ }
+    setTimeout(schleife, 110);
+  };
+  schleife();
+}
+/* Zusatzfunktionen: Licht, Zoom, Foto-Modus */
+function scanKameraOptionen() {
+  const tr = SCAN.stream && SCAN.stream.getVideoTracks()[0]; if (!tr) return;
+  try { tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}); } catch (e) { /* nicht unterstützt */ }
+  let cap = {}; try { cap = tr.getCapabilities ? tr.getCapabilities() : {}; } catch (e) { /* ohne */ }
+  SCAN.licht = false; $('scanlicht').hidden = !cap.torch; $('scanlicht').textContent = '🔦 Licht';
+  const z = $('scanzoom'); z.hidden = !cap.zoom;
+  if (cap.zoom) { z.min = cap.zoom.min; z.max = Math.min(cap.zoom.max, cap.zoom.min * 6); z.step = cap.zoom.step || 0.1; z.value = cap.zoom.min; }
+}
+$('scanlicht').onclick = async () => {
+  const tr = SCAN.stream && SCAN.stream.getVideoTracks()[0]; if (!tr) return; SCAN.licht = !SCAN.licht;
+  try { await tr.applyConstraints({ advanced: [{ torch: SCAN.licht }] }); $('scanlicht').textContent = SCAN.licht ? '🔦 Licht aus' : '🔦 Licht'; } catch (e) { SCAN.licht = false; }
+};
+$('scanzoom').oninput = () => { const tr = SCAN.stream && SCAN.stream.getVideoTracks()[0]; if (tr) tr.applyConstraints({ advanced: [{ zoom: +$('scanzoom').value }] }).catch(() => {}); };
+
+</script></body></html>

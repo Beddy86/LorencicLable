@@ -63,6 +63,11 @@ _ab = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
 if os.path.exists(_ab) and os.path.abspath(a.out) != os.path.dirname(_ab):
     shutil.copy(_ab, os.path.join(a.out, "abholung.html"))
 
+# ---- Zusatzseite reparaturen.html (Reparatur-Sendungen) in den Zielordner kopieren
+_rep = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "reparaturen.html")
+if os.path.isfile(_rep) and os.path.abspath(a.out) != os.path.dirname(_rep):
+    shutil.copy(_rep, os.path.join(a.out, "reparaturen.html"))
+
 # ---- Fotos
 safe = lambda m: re.sub(r'[\\/:*?"<>|]', "_", m)
 bysafe = {}
