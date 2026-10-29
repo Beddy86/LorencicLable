@@ -409,6 +409,19 @@ $('scanlicht').onclick = async () => {
   try { await tr.applyConstraints({ advanced: [{ torch: SCAN.licht }] }); $('scanlicht').textContent = SCAN.licht ? '🔦 Licht aus' : '🔦 Licht'; } catch (e) { SCAN.licht = false; }
 };
 $('scanzoom').oninput = () => { const tr = SCAN.stream && SCAN.stream.getVideoTracks()[0]; if (tr) tr.applyConstraints({ advanced: [{ zoom: +$('scanzoom').value }] }).catch(() => {}); };
+/* Text-Erkennung (OCR) als Reserve im Foto-Modus: liest die Artikelnummer (beginnt mit Z), wenn der Barcode nicht lesbar ist */
+async function scanOCR(c) {
+  if (!window.Tesseract) await new Promise((ok, err) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+    sc.onload = ok; sc.onerror = () => err(new Error('Text-Erkennung konnte nicht geladen werden (Internet?)')); document.head.appendChild(sc); });
+  if (!SCAN.ocr) { SCAN.ocr = await Tesseract.createWorker('eng', 1, { langPath: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng/4.0.0_best_int' });
+    await SCAN.ocr.setParameters({ tessedit_pageseg_mode: '11', tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-' }); }
+  const pruefe = t => { for (let n = t.length; n >= 4; n--) { const k = t.slice(0, n); for (const v of [k, k[0] + k.slice(1).replace(/O/g, '0')]) if (LOOKUP.has(v)) return v; } return null; };
+  for (const img of [c, scanBild(scanDehnen(scanGrauCanvas(c)))]) {
+    const { data } = await SCAN.ocr.recognize(img);
+    for (const t of (data.text.toUpperCase().match(/Z[A-Z0-9-]{3,}/g) || [])) { const k = pruefe(t); if (k) return LOOKUP.get(k)[0]; }
+  }
+  return null;
+}
 $('scanfoto').onclick = () => $('scanfotodatei').click();
 $('scanfotodatei').onchange = async ev => {
   const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
@@ -425,7 +438,8 @@ $('scanfotodatei').onchange = async ev => {
       await new Promise(r => setTimeout(r, 0)); code = await SCAN.basis(s);
       for (let k = 0; k < SCAN_NVAR && !code; k++) { const r = await SCAN.basis(scanVariante(s, k)); if (r) { if (kand.has(r)) code = r; else kand.set(r, 1); } }
     }
-    if (code) { SCAN.letzter = ''; scanTreffer(String(code).trim()); } else scanMeldung('Im Foto kein Barcode erkannt – näher heran, mehr Licht, gerade halten.', 'fehler');
+    if (!code) { scanMeldung('Barcode nicht lesbar – lese stattdessen die Artikelnummer (Text) …'); code = await scanOCR(c); if (code) SCAN.letzter = ''; }
+    if (code) { SCAN.letzter = ''; scanTreffer(String(code).trim()); } else scanMeldung('Weder Barcode noch Artikelnummer erkannt – näher heran, mehr Licht, gerade halten, Nummer im Bild.', 'fehler');
   } catch (e) { scanMeldung('Foto konnte nicht ausgewertet werden.', 'fehler'); }
 };
 $('scanbtn').onclick = scanStart; $('scanfertig').onclick = () => scanStop(true);
