@@ -238,7 +238,7 @@ $('senden').onclick = async () => {
   if (!vorPruefung()) return;
   const an = $('empf').value.trim();
   if (an) { try { await navigator.clipboard.writeText(an); } catch (e) { /* ohne Zwischenablage */ } }
-  const r = baueBlatt(), betreff = 'Abholung ' + r.datum + ($('kunde').value.trim() ? ' – ' + $('kunde').value.trim() : '');
+  const r = baueBlatt(), betreff = 'Abholung mit Scanner';
   const text = 'Abholung vom ' + r.datum + '\n' + POS.length + ' Positionen, ' + r.stk + ' Stück\nErfasst von: ' + ($('mitarbeiter').value.trim() || '-') + '\nPDF im Anhang.\n\nFür VA01 (Material, Menge):\n' + POS.map(p => p.mat + '\t' + p.menge).join('\n');
   const file = new File([r.blob], r.name, { type: 'application/pdf' });
   const txtName = r.name.replace(/\.pdf$/i, '') + '_VA01.txt';
