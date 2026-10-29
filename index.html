@@ -90,10 +90,10 @@
 <main>
   <section class="karte">
     <label class="titel" for="art">Artikelnummern (eine pro Zeile)</label>
-    <textarea id="art" placeholder="Z100&#10;Z5-1&#10;Z170000*3&#10;Z100@A-12-03" autofocus spellcheck="false" autocapitalize="characters" autocomplete="off"></textarea>
+    <textarea id="art" placeholder="Z100&#10;Z5-1&#10;Z170000*3" autofocus spellcheck="false" autocapitalize="characters" autocomplete="off"></textarea>
     <div class="scanzeile"><button id="scanbtn" type="button">📷 Barcodes scannen</button>
       <span class="hinweis" style="margin:0">Etiketten, Regale oder Ware mit der Handykamera einlesen.</span></div>
-    <p class="hinweis">Mehrere Etiketten für einen Artikel: <code>Z170000*3</code> = dreimal. Lagerplatz von Hand: <code>Z100@A-12-03</code>.
+    <p class="hinweis">Mehrere Etiketten für einen Artikel: <code>Z170000*3</code> = dreimal.
       Trennen mit Zeilenumbruch, Leerzeichen oder Komma.</p>
     <div class="optionen">
       <label class="feld voll">Format
@@ -112,20 +112,20 @@
           <option value="einzel" selected>Einzeletiketten</option>
           <option value="sammel">Sammeletikett (A4, Zeile = Blatt)</option>
         </select></label>
-      <label class="feld">Seitenlayout
+      <label class="feld" hidden>Seitenlayout
         <select id="a4">
           <option value="1" selected>Mehrere pro A4 (Schnittmarken)</option>
           <option value="0">Ein Etikett pro Seite</option>
         </select></label>
-      <label class="feld">Rahmen
+      <label class="feld" hidden>Rahmen
         <select id="rahmen">
           <option value="1" selected>Rahmen um jedes Etikett</option>
           <option value="0">Ohne Rahmen</option>
         </select></label>
-      <label class="feld">Lagerplatz
+      <label class="feld" hidden>Lagerplatz
         <select id="platz">
-          <option value="1" selected>Aufs Etikett drucken</option>
-          <option value="0">Nicht drucken</option>
+          <option value="1">Aufs Etikett drucken</option>
+          <option value="0" selected>Nicht drucken</option>
         </select></label>
       <label class="feld">Katalogseite
         <select id="katalog">
