@@ -57,6 +57,12 @@ if os.path.exists(_ean):
         json.dump(_m, f, separators=(",", ":"))
     print(f"{len(_m)} EAN-Zuordnungen -> ean.json")
 
+# ---- Zusatzseite abholung.html (Abholungen erfassen) in den Zielordner kopieren
+import shutil
+_ab = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "abholung.html")
+if os.path.exists(_ab) and os.path.abspath(a.out) != os.path.dirname(_ab):
+    shutil.copy(_ab, os.path.join(a.out, "abholung.html"))
+
 # ---- Fotos
 safe = lambda m: re.sub(r'[\\/:*?"<>|]', "_", m)
 bysafe = {}
