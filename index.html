@@ -183,7 +183,10 @@
   <div class="rahmen" id="scanrahmen"><i></i><i></i><i></i><i></i><b></b></div>
   <div class="unten">
     <div class="meldung" id="scanmeldung">Kamera wird gestartet …</div>
+    <input type="range" id="scanzoom" hidden style="width:100%">
     <div class="knoepfe">
+            <button type="button" id="scanlicht" hidden>🔦 Licht</button>
+      <button type="button" id="scanfoto">📷 Foto</button><input type="file" id="scanfotodatei" accept="image/*" capture="environment" hidden>
       <button type="button" id="scanundo">↶ Rückgängig</button>
       <button type="button" id="scangruppe" hidden>↵ Neue Gruppe</button>
       <button type="button" id="scanfertig" class="fertig">Fertig</button>
@@ -837,7 +840,88 @@ function scanTreffer(code) {
   scanPiep(true);
   scanMeldung('✔ <b>' + esc(mat) + '</b>' + (SCAN.zaehler.get(mat) > 1 ? ' ×' + SCAN.zaehler.get(mat) : '') + '<br><span style="opacity:.8">' + esc(e[1].slice(0, 70)) + '</span> · ' + SCAN.stack.length + ' gescannt', 'treffer');
 }
-async function scanDetektor() {
+/* --- Kontrastarme / verblasste Etiketten: Bildaufbereitung vor dem Dekodieren --- */
+function scanGrauCanvas(c) {
+  const w = c.width, h = c.height, d = c.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h).data, g = new Uint8ClampedArray(w * h);
+  for (let i = 0, j = 0; i < g.length; i++, j += 4) g[i] = (d[j] * 77 + d[j + 1] * 150 + d[j + 2] * 29) >> 8;
+  return { g, w, h };
+}
+function scanBild(G) {
+  const c = document.createElement('canvas'); c.width = G.w; c.height = G.h; const x = c.getContext('2d'), im = x.createImageData(G.w, G.h);
+  for (let i = 0, j = 0; i < G.g.length; i++, j += 4) { im.data[j] = im.data[j + 1] = im.data[j + 2] = G.g[i]; im.data[j + 3] = 255; }
+  x.putImageData(im, 0, 0); return c;
+}
+function scanDehnen(G) {            // Kontrast auf 1%–99% der Helligkeiten strecken
+  const hist = new Uint32Array(256); for (let i = 0; i < G.g.length; i++) hist[G.g[i]]++;
+  const n = G.g.length; let lo = 0, hi = 255, s = 0;
+  for (let v = 0; v < 256; v++) { s += hist[v]; if (s > n * 0.01) { lo = v; break; } }
+  s = 0; for (let v = 255; v >= 0; v--) { s += hist[v]; if (s > n * 0.01) { hi = v; break; } }
+  if (hi - lo < 10) hi = Math.min(255, lo + 10);
+  const f = 255 / (hi - lo), o = new Uint8ClampedArray(n); for (let i = 0; i < n; i++) o[i] = (G.g[i] - lo) * f;
+  return { g: o, w: G.w, h: G.h };
+}
+function scanIntegral(G) {
+  const w = G.w, h = G.h, I = new Float64Array((w + 1) * (h + 1));
+  for (let y = 0; y < h; y++) { let r = 0; for (let x = 0; x < w; x++) { r += G.g[y * w + x]; I[(y + 1) * (w + 1) + x + 1] = I[y * (w + 1) + x + 1] + r; } }
+  return I;
+}
+function scanMittel(G, I, r) {      // lokaler Mittelwert (Box-Filter, Radius r)
+  const w = G.w, h = G.h, M = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) { const y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1);
+    for (let x = 0; x < w; x++) { const x0 = Math.max(0, x - r), x1 = Math.min(w, x + r + 1);
+      M[y * w + x] = (I[y1 * (w + 1) + x1] - I[y0 * (w + 1) + x1] - I[y1 * (w + 1) + x0] + I[y0 * (w + 1) + x0]) / ((x1 - x0) * (y1 - y0)); } }
+  return M;
+}
+function scanSchaerfen(G) {         // Unsharp-Mask gegen Unschärfe
+  const M = scanMittel(G, scanIntegral(G), 2), o = new Uint8ClampedArray(G.g.length);
+  for (let i = 0; i < o.length; i++) o[i] = G.g[i] + 2.2 * (G.g[i] - M[i]);
+  return { g: o, w: G.w, h: G.h };
+}
+function scanSchwelle(G, bias) {    // lokale Schwarz-Weiß-Schwelle (gegen Schatten/Verlauf)
+  const r = Math.max(10, Math.round(G.w / 14)), M = scanMittel(G, scanIntegral(G), r), o = new Uint8ClampedArray(G.g.length);
+  for (let i = 0; i < o.length; i++) o[i] = G.g[i] < M[i] - bias ? 0 : 255;
+  return { g: o, w: G.w, h: G.h };
+}
+function scanVertikal(G, r) {      // Rauschen mitteln: senkrecht über benachbarte Zeilen (Strichcode-Striche sind senkrecht)
+  const w = G.w, h = G.h, o = new Uint8ClampedArray(w * h), col = new Float64Array(h + 1);
+  for (let x = 0; x < w; x++) { for (let y = 0; y < h; y++) col[y + 1] = col[y] + G.g[y * w + x];
+    for (let y = 0; y < h; y++) { const y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1); o[y * w + x] = (col[y1] - col[y0]) / (y1 - y0); } }
+  return { g: o, w, h };
+}
+function scanEben(G) {             // Helligkeitsverlauf/Schatten herausrechnen, dann Kontrast strecken
+  const M = scanMittel(G, scanIntegral(G), Math.max(10, Math.round(G.w / 10))), D = new Float32Array(G.g.length);
+  let mn = 1e9, mx = -1e9; for (let i = 0; i < D.length; i++) { D[i] = G.g[i] - M[i]; }
+  const hist = new Uint32Array(512); for (let i = 0; i < D.length; i++) hist[Math.max(0, Math.min(511, Math.round(D[i]) + 256))]++;
+  let s = 0, lo = -10, hi = 10; for (let v = 0; v < 512; v++) { s += hist[v]; if (s > D.length * 0.02) { lo = v - 256; break; } }
+  s = 0; for (let v = 511; v >= 0; v--) { s += hist[v]; if (s > D.length * 0.02) { hi = v - 256; break; } }
+  if (hi - lo < 6) { lo -= 3; hi += 3; }
+  const o = new Uint8ClampedArray(D.length), f = 255 / (hi - lo); for (let i = 0; i < o.length; i++) o[i] = (D[i] - lo) * f;
+  return { g: o, w: G.w, h: G.h };
+}
+function scanHoch(c, f) { const o = document.createElement('canvas'); o.width = Math.round(c.width * f); o.height = Math.round(c.height * f);
+  const x = o.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(c, 0, 0, o.width, o.height); return o; }
+const SCAN_NVAR = 7;
+function scanVariante(c, k) {       // eine Aufbereitung pro Kamerabild (reihum), damit der Scanner flüssig bleibt
+  const G0 = scanGrauCanvas(c), r = Math.max(2, Math.round(G0.h / 12));
+  if (k >= 5) { const c2 = scanHoch(c, 2), V2 = scanVertikal(scanGrauCanvas(c2), r * 2);
+    return scanBild(k === 5 ? scanSchaerfen(scanDehnen(V2)) : scanSchaerfen(scanEben(V2))); }
+  const V = scanVertikal(G0, r);
+  if (k === 0) return scanBild(scanDehnen(V));
+  if (k === 1) return scanBild(scanEben(V));
+  if (k === 2) return scanBild(scanSchaerfen(scanEben(V)));
+  if (k === 3) return scanBild(scanSchaerfen(scanDehnen(V)));
+  return scanBild(scanSchwelle(scanDehnen(V), 0));
+}
+function scanMitVarianten(basis) {   // Treffer aus aufbereiteten Bildern gelten erst, wenn derselbe Code kurz darauf nochmal gelesen wird (gegen Fehlerkennung)
+  let n = 0; const kand = new Map();
+  return async c => { let r = await basis(c); if (r) return r;
+    r = await basis(scanVariante(c, n++ % SCAN_NVAR)); if (!r) return null;
+    const t = Date.now(), e = kand.get(r); kand.set(r, t);
+    if (e && t - e < 4000) { kand.delete(r); return r; } return null; };
+}
+
+async function scanDetektor() { SCAN.basis = await scanDetektorBasis(); return scanMitVarianten(SCAN.basis); }
+async function scanDetektorBasis() {
   if ('BarcodeDetector' in window) {
     try {
       const f = await BarcodeDetector.getSupportedFormats();
@@ -868,8 +952,8 @@ async function scanStart() {
   ov.hidden = false; scanMeldung('Kamera wird gestartet …');
   try {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Kamera-Zugriff nicht möglich (nur über https oder in einem Browser mit Kamera).');
-    SCAN.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
-    video.srcObject = SCAN.stream; await video.play();
+    SCAN.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+    video.srcObject = SCAN.stream; await video.play(); scanKameraOptionen();
     SCAN.detect = await scanDetektor();
   } catch (e) {
     scanStop(false);
@@ -888,7 +972,7 @@ async function scanStart() {
         const sc = Math.max(cr.width / vw, cr.height / vh), ox = (cr.width - vw * sc) / 2, oy = (cr.height - vh * sc) / 2;
         const sx = Math.max(0, (fr.left - cr.left - ox) / sc), sy = Math.max(0, (fr.top - cr.top - oy) / sc);
         const sw = Math.min(vw - sx, fr.width / sc), sh = Math.min(vh - sy, fr.height / sc);
-        const f = Math.min(1, 900 / sw); cv.width = Math.round(sw * f); cv.height = Math.round(sh * f);
+        const f = Math.min(1, 1000 / sw); cv.width = Math.round(sw * f); cv.height = Math.round(sh * f);
         ctx.drawImage(video, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
         const code = await SCAN.detect(cv);
         if (code) scanTreffer(String(code).trim());
@@ -899,11 +983,45 @@ async function scanStart() {
   schleife();
 }
 function scanStop(fertig) {
-  SCAN.laeuft = false;
+  SCAN.laeuft = false; SCAN.detect = null;
   if (SCAN.stream) { SCAN.stream.getTracks().forEach(t => t.stop()); SCAN.stream = null; }
   $('scanvideo').srcObject = null; $('scan').hidden = true;
   if (fertig && SCAN.stack.length) { $('art').dispatchEvent(new Event('input')); $('art').scrollIntoView({ block: 'center' }); }
 }
+
+/* Zusatzfunktionen: Licht, Zoom, Foto-Modus */
+function scanKameraOptionen() {
+  const tr = SCAN.stream && SCAN.stream.getVideoTracks()[0]; if (!tr) return;
+  try { tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}); } catch (e) { /* nicht unterstützt */ }
+  let cap = {}; try { cap = tr.getCapabilities ? tr.getCapabilities() : {}; } catch (e) { /* ohne */ }
+  SCAN.licht = false; $('scanlicht').hidden = !cap.torch; $('scanlicht').textContent = '🔦 Licht';
+  const z = $('scanzoom'); z.hidden = !cap.zoom;
+  if (cap.zoom) { z.min = cap.zoom.min; z.max = Math.min(cap.zoom.max, cap.zoom.min * 6); z.step = cap.zoom.step || 0.1; z.value = cap.zoom.min; }
+}
+$('scanlicht').onclick = async () => {
+  const tr = SCAN.stream && SCAN.stream.getVideoTracks()[0]; if (!tr) return; SCAN.licht = !SCAN.licht;
+  try { await tr.applyConstraints({ advanced: [{ torch: SCAN.licht }] }); $('scanlicht').textContent = SCAN.licht ? '🔦 Licht aus' : '🔦 Licht'; } catch (e) { SCAN.licht = false; }
+};
+$('scanzoom').oninput = () => { const tr = SCAN.stream && SCAN.stream.getVideoTracks()[0]; if (tr) tr.applyConstraints({ advanced: [{ zoom: +$('scanzoom').value }] }).catch(() => {}); };
+$('scanfoto').onclick = () => $('scanfotodatei').click();
+$('scanfotodatei').onchange = async ev => {
+  const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
+  scanMeldung('Foto wird ausgewertet …');
+  try {
+    const bmp = await createImageBitmap(f), k = Math.min(1, 1500 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k); c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    if (!SCAN.detect) SCAN.detect = await scanDetektor();
+    let code = await SCAN.basis(c); const kand = new Map();
+    // Strichcode liegt irgendwo im Foto: waagerechte Streifen in zwei Größen durchprobieren; Treffer aus Aufbereitungen müssen 2× vorkommen
+    for (const hh of [0.34, 0.2]) for (let y0 = 0; y0 + hh <= 1.001 && !code; y0 += hh * 0.6) for (const W of [1000, 560]) {
+      const sc = W / c.width, s = document.createElement('canvas'); s.width = W; s.height = Math.max(20, Math.round(c.height * hh * sc));
+      s.getContext('2d').drawImage(c, 0, -Math.round(c.height * Math.min(y0, 1 - hh) * sc), W, c.height * sc);
+      await new Promise(r => setTimeout(r, 0)); code = await SCAN.basis(s);
+      for (let k = 0; k < SCAN_NVAR && !code; k++) { const r = await SCAN.basis(scanVariante(s, k)); if (r) { if (kand.has(r)) code = r; else kand.set(r, 1); } }
+    }
+    if (code) { SCAN.letzter = ''; scanTreffer(String(code).trim()); } else scanMeldung('Im Foto kein Barcode erkannt – näher heran, mehr Licht, gerade halten.', 'fehler');
+  } catch (e) { scanMeldung('Foto konnte nicht ausgewertet werden.', 'fehler'); }
+};
 $('scanbtn').onclick = scanStart;
 $('scanfertig').onclick = () => scanStop(true);
 $('scangruppe').onclick = () => { const ta = $('art'); if (ta.value.trim()) { ta.value = ta.value.replace(/\s+$/, '') + '\n'; SCAN.zaehler = new Map(); scanMeldung('Neue Gruppe begonnen'); } };
