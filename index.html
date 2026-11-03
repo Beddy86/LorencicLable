@@ -98,7 +98,7 @@
     <div class="optionen">
       <label class="feld voll">Format
         <select id="fmt">
-          <option value="stopper" selected>Regalstopper 10 × 4 cm</option>
+          <option value="stopper" selected>Regalstopper 105 × 38 mm (Sigel LP783)</option>
           <option value="avery3481">Avery 3481 – Klebeetikett 70 × 41 mm</option>
           <option value="a4">A4 quer (1 Etikett pro Blatt)</option>
           <option value="a5">A5 quer (mit A4-Haken: 2 pro Blatt)</option>
@@ -368,16 +368,16 @@ function drawPlatz(cv, platz, kat, x, y, size, maxW) {
 }
 
 /* ------------------------------------------------------------ Formate */
-const FORMATS = { '165x63': [165, 63], a4: [297, 210], stopper: [100, 40], avery3475: [70, 36], avery3481: [70, 41], mini: [56, 25], a5: [210, 148] };
+const FORMATS = { '165x63': [165, 63], a4: [297, 210], stopper: [105, 38], avery3475: [70, 36], avery3481: [70, 41], mini: [56, 25], a5: [210, 148] };
 const PARAMS = {
   '165x63': { platz: 14, M: 4, bar_h: 10, num_max: 64, num_min: 48, desc_max: 16, desc_min: 8, img_min: 42 },
   avery3475: { platz: 8, M: 3, bar_h: 8, num_max: 34, num_min: 18, desc_max: 9, desc_min: 5, img_min: 14 },
   avery3481: { platz: 9, M: 3, bar_h: 9, num_max: 36, num_min: 18, desc_max: 10, desc_min: 5, img_min: 14 },
   mini: { platz: 6, M: 2, bar_h: 5, num_max: 22, num_min: 12, desc_max: 6, desc_min: 4, img_min: 13 },
-  stopper: { platz: 9, M: 2.5, bar_h: 7, num_max: 40, num_min: 28, desc_max: 10, desc_min: 6, img_min: 24 }
+  stopper: { platz: 9, M: 2.5, bar_h: 7, num_max: 38, num_min: 28, desc_max: 10, desc_min: 6, img_min: 22 }
 };
-const INSET = { a4: 8, a5: 6, mini: 0.8, avery3475: 2, avery3481: 2 };
-const GROSS = new Set(['a4', 'a5']), HOCH = new Set(), BOGEN = new Set(['avery3475', 'avery3481']);
+const INSET = { a4: 8, a5: 6, mini: 0.8, avery3475: 2, avery3481: 2, stopper: 2 };
+const GROSS = new Set(['a4', 'a5']), HOCH = new Set(), BOGEN = new Set(['avery3475', 'avery3481', 'stopper']);
 let DRUCKERRAND = 6, SHOW_PLATZ = true, SHOW_KATALOG = true;
 
 function regCustom(w, h) {

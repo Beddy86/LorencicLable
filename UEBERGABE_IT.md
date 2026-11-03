@@ -8,7 +8,7 @@ Zwei kleine Web-Anwendungen für das Lager. Sie laufen komplett im Browser (Hand
 
 | Anwendung | Datei | Zweck |
 |---|---|---|
-| Lageretiketten | `index.html` | Etiketten als PDF drucken: Foto, Artikelnummer, Code-128-Barcode, Bezeichnung. Formate: Regalstopper 10×4 cm, Avery 3481 (70×41 mm), A4 quer, A5 quer, eigene Größe. Sammeletiketten (mehrere Artikel auf einem Etikett). Barcode-Scanner mit Handy-Kamera. |
+| Lageretiketten | `index.html` | Etiketten als PDF drucken: Foto, Artikelnummer, Code-128-Barcode, Bezeichnung. Formate: Regalstopper 105×38 mm (Sigel LP783, 2×7 pro A4), Avery 3481 (70×41 mm), A4 quer, A5 quer, eigene Größe. Sammeletiketten (mehrere Artikel auf einem Etikett). Barcode-Scanner mit Handy-Kamera. |
 | Abholung erfassen | `abholung.html` | Lagermitarbeiter scannen Artikel, die abgeholt werden. Ergebnis: PDF (Beleg) plus Textdatei zum Einfügen in VA01. Versand per Mail vom Handy. |
 
 Aktuell läuft beides auf GitHub Pages: https://beddy86.github.io/LorencicLable/ (Quellcode: Repository `Beddy86/LorencicLable`).
