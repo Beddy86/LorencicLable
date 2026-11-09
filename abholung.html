@@ -174,7 +174,8 @@ function hinzu(code) {          // liefert die Position zurück
   const e = finde(code); let mat, text, unbekannt = false;
   if (e) { mat = e[0]; text = e[1]; } else { mat = String(code).trim(); text = 'nicht in der Artikelliste – bitte prüfen'; unbekannt = true; }
   let p = POS.find(x => x.mat === mat);
-  if (p) p.menge++; else { p = { mat, text, menge: 1, unbekannt }; POS.push(p); }
+  if (p) { p.menge++; POS.splice(POS.indexOf(p), 1); } else p = { mat, text, menge: 1, unbekannt };
+  POS.unshift(p);               // neu gescannte Artikel stehen oben
   zeichne(); return p;
 }
 function manuell() {
