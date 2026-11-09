@@ -632,8 +632,14 @@ function parseTokens(text) {
   }
   return out;
 }
+function toleranz(up) {          // Null und O werden oft verwechselt (Z0048L0 statt Z0048LO): letzte 3 Zeichen tauschen
+  const n = up.length; if (n < 5) return null;
+  const head = up.slice(0, n - 3), tail = up.slice(n - 3), alt = c => c === '0' ? ['0', 'O'] : c === 'O' ? ['O', '0'] : [c];
+  for (const a of alt(tail[0])) for (const b of alt(tail[1])) for (const c of alt(tail[2])) { const e = LOOKUP.get(head + a + b + c); if (e) return e; }
+  return null;
+}
 function artikel(tok, platzHand) {
-  const e = LOOKUP.get(tok.toUpperCase());
+  const e = LOOKUP.get(tok.toUpperCase()) || toleranz(tok.toUpperCase());
   if (!e) return null;
   const up = e[0].toUpperCase();
   return { mat: e[0], text: e[1], platz: platzHand || PLATZMAP.get(up) || '', kat: KATMAP.get(up) || (e[2] || ''), hinweis: e[3] || '' };
