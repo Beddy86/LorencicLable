@@ -1,4 +1,4 @@
-﻿Material;Materiallangtext;WGR;LGR;BME;Katalogseite
+﻿Material;Materiallangtext;WGR;LGR;BME;Katalogseite;Hinweis
 Z00001115;Lenkrolle G5C / G54;P06;3000;ST;-
 Z00001116;Doppelstop-Lenkrolle G5C / G54;P06;3000;ST;-
 Z00001350;Ein-/Ausschalter MULTIMIX 400V;P06;3000;ST;-
@@ -8873,3 +8873,10 @@ ZZEISING;Zeising für Bauzaun-Sichtschutzblende 25Stk/Pack;M23;5210;PAK;-
 Z10031;Alu-Fuß hinten mit Halter 650mm für Auslaufbock ZZB22100;B24;3030;ST;-
 Z10032;Alu-Fuß vorne links/rechts ohne Halter 650mm für Auslaufbock ZZB22100;B24;3030;ST;-
 Z013086;Glättkelle Kunststoff PAJARITO P-Line 280x135x2mm mit Holzgriff VPE5;K14;7500;ST;-
+Z0896501;Ersatzschleifbelag 500x240mm Korn 16 VPE20;;;;-;AUSLAUFARTIKEL
+Z1014600;Kompriband 10mm Fugenbreite 1-4mm 13,0lfm/Roll 600Pascal BG1 schwarz 30Roll/Kart 60Kart/Pa;;;;-;AUSLAUFARTIKEL
+Z15512600;Kompriband 15mm Fugenbreite 5-12mm 5,6lfm/Roll 600Pascal BG1 schwarz 20Roll/Kart 60Kart/Pa;;;;-;AUSLAUFARTIKEL
+Z2049600;Kompriband 20mm Fugenbreite 4-9mm 8,0lfm/Roll 600Pascal BG1 schwarz 15Roll/Kart 60Kart/Pal;;;;-;AUSLAUFARTIKEL
+Z331948;PE-Klebeband 3319 glatt weiß 48mm x 33m 36Roll/Kart 66Kart/Pal !K. Haft. f. Rückst.!;;;;-;AUSLAUFARTIKEL
+Z45971;Ersatz-Abreißklinge 15cm für Abdeckmaschine;;;;-;AUSLAUFARTIKEL
+Z777E5646;Zahnleiste TKB R1 560mm für Wandspachtel 6760 VPE12;;;;-;AUSLAUFARTIKEL

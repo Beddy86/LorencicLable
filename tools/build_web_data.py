@@ -41,7 +41,10 @@ with open(a.liste, newline="", encoding="utf-8-sig") as f:
     for x in r:
         if x and x[0].strip():
             k = x[5].strip() if len(x) > 5 else ""
-            rows.append([x[0].strip(), x[1].strip() if len(x) > 1 else "", "" if k in ("-", "") else k])
+            row = [x[0].strip(), x[1].strip() if len(x) > 1 else "", "" if k in ("-", "") else k]
+            if len(x) > 6 and x[6].strip():
+                row.append(x[6].strip())          # Hinweis, z. B. AUSLAUFARTIKEL (blauer Rahmen auf dem Etikett)
+            rows.append(row)
 with open(os.path.join(a.out, "liste.json"), "w", encoding="utf-8") as f:
     json.dump(rows, f, ensure_ascii=False, separators=(",", ":"))
 
@@ -71,7 +74,7 @@ if os.path.isfile(_rep) and os.path.abspath(a.out) != os.path.dirname(_rep):
 # ---- Fotos
 safe = lambda m: re.sub(r'[\\/:*?"<>|]', "_", m)
 bysafe = {}
-for m, _, _ in rows:
+for m, *_ in rows:
     bysafe.setdefault(safe(m).upper(), m)
 
 idx_path = os.path.join(fotodir, "index.json")

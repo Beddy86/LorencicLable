@@ -218,7 +218,7 @@ async function ladeDaten() {
       fetch('liste.json').then(r => r.json()),
       fetch('fotos/index.json').then(r => r.json())
     ]);
-    for (const [m, t, k] of liste) LOOKUP.set(m.toUpperCase(), [m, t, k]);
+    for (const [m, t, k, h] of liste) LOOKUP.set(m.toUpperCase(), [m, t, k, h || '']);
     FOTOIDX = idx;
     try { const ean = await fetch('ean.json').then(r => r.ok ? r.json() : {}); for (const [k, m] of Object.entries(ean)) EANMAP.set(k, m); } catch (e) { /* ean.json ist optional */ }
     for (const m of Object.keys(idx)) FOTOIDX_UP.set(m.toUpperCase(), m);
@@ -324,8 +324,8 @@ class Cv {
   strR(t, x, y) { this.d.text(t, this.ox + x, this.PH - (this.oy + y), { align: 'right' }); }
   line(x1, y1, x2, y2) { this.d.line(this.ox + x1, this.PH - (this.oy + y1), this.ox + x2, this.PH - (this.oy + y2)); }
   rrect(x, y, w, h, r) { this.d.roundedRect(this.ox + x, this.PH - (this.oy + y + h), w, h, r, r, 'S'); }
-  stroke(v, lw) { this.d.setDrawColor(v * 255); this.d.setLineWidth(lw); }
-  ink(v) { this.d.setTextColor(v * 255); }
+  stroke(v, lw) { if (Array.isArray(v)) this.d.setDrawColor(v[0] * 255, v[1] * 255, v[2] * 255); else this.d.setDrawColor(v * 255); this.d.setLineWidth(lw); }
+  ink(v) { if (Array.isArray(v)) this.d.setTextColor(v[0] * 255, v[1] * 255, v[2] * 255); else this.d.setTextColor(v * 255); }
   img(im, x, y, w, h) { this.d.addImage(im.url, 'JPEG', this.ox + x, this.PH - (this.oy + y + h), w, h); }
   barcode(s, x, y, bw, bh) {
     const codes = code128(s); let px = x; this.d.setFillColor(0);
@@ -360,10 +360,13 @@ function drawImg(cv, im, x, y, bw, bh) {
 }
 function drawPlatz(cv, platz, kat, x, y, size, maxW) {
   let left = platz ? 'Platz: ' + platz : '', right = kat ? 'Katalog: ' + kat : '';
-  if (!platz) { left = right; right = ''; }
-  const fl = platz ? 'B' : 'R';
+  if (cv.hint) left = cv.hint;                      // z. B. AUSLAUFARTIKEL
+  else if (!platz) { left = right; right = ''; }
+  const fl = (platz || cv.hint) ? 'B' : 'R';
+  if (cv.hint) cv.ink([0, 0.27, 0.8]);
   while (size > 5 && (cv.sw(left, fl, size) + (right ? cv.sw(right, 'R', size) + size * 1.5 : 0)) > maxW) size -= 0.5;
   cv.font(fl, size); cv.str(left, x, y);
+  if (cv.hint) cv.ink(0);
   if (right) { cv.font('R', size); cv.strR(right, x + maxW, y); }
 }
 
@@ -392,7 +395,7 @@ function regCustom(w, h) {
 }
 
 function footerOf(a) {
-  return [SHOW_PLATZ ? (a.platz || '') : '', SHOW_KATALOG ? (a.kat || '') : ''];
+  return [a.hinweis ? a.hinweis : (SHOW_PLATZ ? (a.platz || '') : ''), SHOW_KATALOG ? (a.kat || '') : ''];
 }
 
 /* ------------------------------------------------------------ Etiketten zeichnen (1:1 aus der Desktop-Version) */
@@ -482,6 +485,7 @@ function drawGross(cv, a, im, W, H) {
 }
 
 function drawLabel(cv, a, im, W, H, fmt) {
+  cv.hint = a.hinweis || '';
   if (HOCH.has(fmt)) drawHoch(cv, a, im, W, H);
   else if (GROSS.has(fmt)) drawGross(cv, a, im, W, H);
   else drawBreit(cv, a, im, W, H, PARAMS[fmt] || PARAMS['165x63']);
@@ -529,8 +533,9 @@ async function baueEinzel(items, fmt, optA4, rahmen) {
       ox += shl; Wl = W - shl - shr;
     }
     cv.ox = ox; cv.oy = oy;
-    if (rahmen) { cv.stroke(0, 1); cv.rrect(inset, inset, Wl - 2 * inset, H - 2 * inset, 2 * MM); }
-    const a = { mat: latin(it.mat), text: latin(it.text), platz: latin(it.platz || ''), kat: latin(it.kat || '') };
+    if (it.hinweis) { const o = Math.min(inset, 1.0 * MM); cv.stroke([0, 0.27, 0.8], 4); cv.rrect(o, o, Wl - 2 * o, H - 2 * o, 2 * MM); }   // dicker blauer Rahmen
+    else if (rahmen) { cv.stroke(0, 1); cv.rrect(inset, inset, Wl - 2 * inset, H - 2 * inset, 2 * MM); }
+    const a = { mat: latin(it.mat), text: latin(it.text), platz: latin(it.platz || ''), kat: latin(it.kat || ''), hinweis: latin(it.hinweis || '') };
     drawLabel(cv, a, it.im, Wl, H, fmt);
   }
   return doc.output('blob');
@@ -631,7 +636,7 @@ function artikel(tok, platzHand) {
   const e = LOOKUP.get(tok.toUpperCase());
   if (!e) return null;
   const up = e[0].toUpperCase();
-  return { mat: e[0], text: e[1], platz: platzHand || PLATZMAP.get(up) || '', kat: KATMAP.get(up) || (e[2] || '') };
+  return { mat: e[0], text: e[1], platz: platzHand || PLATZMAP.get(up) || '', kat: KATMAP.get(up) || (e[2] || ''), hinweis: e[3] || '' };
 }
 
 /* ------------------------------------------------------------ Hauptablauf */
