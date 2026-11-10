@@ -279,6 +279,15 @@ async function bildFuer(mat) {
   IMGCACHE.set(key, res);
   return res;
 }
+/* Geänderte Fotos bleiben auf diesem Gerät gespeichert (IndexedDB) */
+const FOTODB = new Promise(res => { try { const r = indexedDB.open('lagerfotos', 1); r.onupgradeneeded = () => r.result.createObjectStore('f'); r.onsuccess = () => res(r.result); r.onerror = () => res(null); } catch (e) { res(null); } });
+async function fotoDb(mode, fn) { const db = await FOTODB; if (!db) return null; return new Promise(res => { try { const tx = db.transaction('f', mode), q = fn(tx.objectStore('f')); tx.oncomplete = () => res(q && q.result); tx.onerror = tx.onabort = () => res(null); } catch (e) { res(null); } }); }
+async function fotoSetzen(mat, file) { OWN.set(mat.toUpperCase(), file); await fotoDb('readwrite', st => st.put(file, mat.toUpperCase())); }
+async function fotoZurueck(mat) { OWN.delete(mat.toUpperCase()); await fotoDb('readwrite', st => st.delete(mat.toUpperCase())); }
+(async () => {
+  const keys = await fotoDb('readonly', st => st.getAllKeys()), vals = await fotoDb('readonly', st => st.getAll());
+  (keys || []).forEach((k, i) => { if (vals[i] && !OWN.has(k)) OWN.set(k, new File([vals[i]], k + '.jpg', { type: vals[i].type })); });
+})();
 const hatFoto = mat => OWN.has(mat.toUpperCase()) || FOTOIDX_UP.has(mat.toUpperCase());
 
 /* ------------------------------------------------------------ Code 128 */
@@ -676,7 +685,7 @@ async function erstellen() {
     const dr = parseFloat($('rand').value); DRUCKERRAND = isFinite(dr) ? dr : 6;
     const rahmen = $('rahmen').value === '1', nurFoto = $('fotos').value === 'nur', sammel = $('art_typ').value === 'sammel';
     const fehlend = [], ohneFoto = [], uebersprungen = [];
-    let blob, anzahl, name;
+    let blob, anzahl, name, gedruckt = [];
 
     if (sammel) {
       const groups = [];
@@ -694,6 +703,7 @@ async function erstellen() {
         if (!g.im) ohneFoto.push(g.items[0].mat + (g.items.length > 1 ? ' …' : ''));
       }
       stand('PDF wird erstellt …'); await new Promise(r => setTimeout(r, 30));
+      gedruckt = alle;
       blob = await baueSammel(groups, rahmen); anzahl = groups.length; name = 'Sammeletiketten';
     } else {
       let items = [];
@@ -712,17 +722,18 @@ async function erstellen() {
       await mitFotos(items, (d, t) => stand('Fotos laden: ' + d + ' von ' + t));
       ohneFoto.push(...new Set(items.filter(i => !i.im).map(i => i.mat)));
       stand('PDF wird erstellt …'); await new Promise(r => setTimeout(r, 30));
+      gedruckt = items;
       blob = await baueEinzel(items, fmt, $('a4').value === '1', rahmen); anzahl = items.length; name = 'Etiketten';
     }
     const d = new Date(), z = n => String(n).padStart(2, '0');
     letztesPdf = { blob, name: name + '_' + d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + '_' + z(d.getHours()) + z(d.getMinutes()) + '.pdf' };
-    zeige(anzahl, sammel, fehlend, ohneFoto, uebersprungen, blob.size);
+    zeige(anzahl, sammel, fehlend, ohneFoto, uebersprungen, blob.size, gedruckt);
   } catch (e) {
     $('res').innerHTML = '<div class="karte fehler"><b>Fehler:</b> ' + esc(e && e.message || e) + '</div>';
   } finally { btn.disabled = false; }
 }
 
-function zeige(anzahl, sammel, fehlend, ohneFoto, uebersprungen, groesse) {
+function zeige(anzahl, sammel, fehlend, ohneFoto, uebersprungen, groesse, gedruckt = []) {
   let h = '<div class="karte ok"><b>' + anzahl + (sammel ? ' Sammeletikett' + (anzahl === 1 ? '' : 'en') : ' Etikett' + (anzahl === 1 ? '' : 'en')) +
     ' erstellt</b> <span class="muted">(' + (groesse / 1048576).toFixed(1).replace('.', ',') + ' MB)</span><br>' +
     '<button id="speichern" class="gruen" type="button">PDF speichern</button><div class="hinweis" id="spinfo"></div></div>';
@@ -734,11 +745,34 @@ function zeige(anzahl, sammel, fehlend, ohneFoto, uebersprungen, groesse) {
         '<input type="file" accept="image/*" hidden data-mat="' + esc(m.replace(' …', '')) + '"></label></div>').join('') +
       '<button id="neu" class="zweit" type="button" hidden style="margin-top:12px">Mit den neuen Fotos neu erstellen</button></div>';
   }
+  const uniq = new Map(); for (const i of gedruckt) if (!uniq.has(i.mat.toUpperCase())) uniq.set(i.mat.toUpperCase(), i);
+  if (uniq.size) {
+    h += '<details class="karte" id="fotokarte"><summary><b>Fotos prüfen / ändern</b> <span class="muted">(' + uniq.size + ' Artikel)</span></summary>' +
+      '<p class="hinweis">Foto ist schlecht oder veraltet? Neues Foto wählen, es wird auf diesem Gerät gespeichert und hat Vorrang vor dem Katalogfoto.</p>' +
+      [...uniq.values()].map(i => '<div class="foto-zeile"><span style="display:flex;align-items:center;gap:10px;min-width:0">' +
+        (i.im ? '<img data-vorschau="' + esc(i.mat) + '" src="' + i.im.url + '" alt="" style="width:48px;height:48px;object-fit:contain;background:#fff;border-radius:6px">' : '<span data-vorschau="' + esc(i.mat) + '" class="muted" style="width:48px;text-align:center">–</span>') +
+        '<span class="n">' + esc(i.mat) + '</span></span><span style="display:flex;gap:6px;flex-wrap:wrap">' +
+        '<label class="knopf zweit" style="cursor:pointer">Foto ändern<input type="file" accept="image/*" hidden data-aendern="' + esc(i.mat) + '"></label>' +
+        (OWN.has(i.mat.toUpperCase()) ? '<button type="button" class="zweit" data-zurueck="' + esc(i.mat) + '">Zurücksetzen</button>' : '') + '</span></div>').join('') +
+      '<button id="neu2" class="zweit" type="button" hidden style="margin-top:12px">Mit den neuen Fotos neu erstellen</button></details>';
+  }
   $('res').innerHTML = h;
   $('speichern').onclick = speichern;
+  document.querySelectorAll('#res input[data-aendern]').forEach(inp => inp.onchange = async () => {
+    const f = inp.files[0]; if (!f) return;
+    await fotoSetzen(inp.dataset.aendern, f);
+    const v = document.querySelector('[data-vorschau="' + CSS.escape(inp.dataset.aendern) + '"]');
+    if (v && v.tagName === 'IMG') v.src = URL.createObjectURL(f);
+    inp.parentElement.firstChild.textContent = 'Foto gesetzt ✓';
+    const nb = $('neu2'); nb.hidden = false; nb.onclick = erstellen;
+  });
+  document.querySelectorAll('#res button[data-zurueck]').forEach(b => b.onclick = async () => {
+    await fotoZurueck(b.dataset.zurueck); b.textContent = 'Zurückgesetzt ✓'; b.disabled = true;
+    const nb = $('neu2'); nb.hidden = false; nb.onclick = erstellen;
+  });
   document.querySelectorAll('#res input[type=file][data-mat]').forEach(inp => inp.onchange = () => {
     if (!inp.files[0]) return;
-    OWN.set(inp.dataset.mat.toUpperCase(), inp.files[0]);
+    fotoSetzen(inp.dataset.mat, inp.files[0]);
     inp.parentElement.firstChild.textContent = 'Foto gesetzt ✓';
     const nb = $('neu'); if (nb) { nb.hidden = false; nb.onclick = erstellen; }
   });
