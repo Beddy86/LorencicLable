@@ -34,7 +34,9 @@
   #scan .rahmen i:nth-child(4){right:-3px;bottom:-3px;border-left:0;border-top:0;border-bottom-right-radius:12px}
   #scan .rahmen b { position:absolute; left:8px; right:8px; top:50%; height:2px; background:#ff3b43; box-shadow:0 0 8px #ff3b43; animation:scanlinie 1.6s ease-in-out infinite alternate; }
   @keyframes scanlinie { from{top:12%} to{top:88%} }
-  #scan .rahmen.treffer { border-color:#3ddc84; } #scan .rahmen.fehler { border-color:#ffb020; }
+  #scan .rahmen { transition:box-shadow .12s; }
+  #scan .rahmen.treffer { border-color:#3ddc84; box-shadow:0 0 0 100vmax rgba(24,190,100,.62); }
+  #scan .rahmen.fehler { border-color:#ff3b43; box-shadow:0 0 0 100vmax rgba(225,35,45,.62); }
   #scan .oben { position:relative; padding:14px 16px; background:linear-gradient(#000a,#0000); font-size:15px; }
   #scan .unten { position:absolute; left:0; right:0; bottom:0; padding:14px 16px max(16px,env(safe-area-inset-bottom,0px)); background:linear-gradient(#0000,#000c); display:grid; gap:10px; }
   #scan .meldung { min-height:44px; font-size:16px; line-height:1.35; }
