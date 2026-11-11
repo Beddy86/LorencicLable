@@ -137,7 +137,7 @@ function laden() {
 async function ladeDaten() {
   try {
     const liste = await fetch('liste.json').then(r => r.json());
-    for (const [m, t] of liste) LOOKUP.set(m.toUpperCase(), [m, t]);
+    for (const [m, t, , h] of liste) LOOKUP.set(m.toUpperCase(), [m, t, h || '']);
     try { const ean = await fetch('ean.json').then(r => r.ok ? r.json() : {}); for (const [k, m] of Object.entries(ean)) EANMAP.set(k, m); } catch (e) { /* optional */ }
     $('listeinfo').textContent = LOOKUP.size.toLocaleString('de-AT') + ' Artikel';
   } catch (e) { $('listeinfo').textContent = 'konnte nicht geladen werden – Seite neu laden'; }
@@ -148,12 +148,13 @@ function finde(code) {
 }
 function meldung(t, art) { const m = $('meldung'); m.hidden = !t; m.className = 'meldung ' + (art || ''); m.innerHTML = t || ''; }
 
+const hinOf = p => (LOOKUP.get(String(p.mat).toUpperCase()) || [])[2] || '';
 function zeichne() {
   for (const p of POS) if (!p.unbekannt) thumbFuer(p.mat);   // Fotos schon beim Erfassen vorladen, damit das PDF sofort fertig ist
   const L = $('liste');
   if (!POS.length) { L.innerHTML = '<p class="leer">Noch nichts erfasst.</p>'; $('summe').hidden = true; sichern(); return; }
   L.innerHTML = POS.map((p, i) => '<div class="pos' + (p.unbekannt ? ' unbekannt' : '') + '"><div class="nr">' + esc(p.mat) + '</div>' +
-    '<div class="txt">' + esc(p.text) + '</div><div class="menge"><button type="button" data-a="minus" data-i="' + i + '" aria-label="weniger">−</button>' +
+    '<div class="txt">' + esc(p.text) + (hinOf(p) ? ' <b style="color:#0044cc">· ' + esc(hinOf(p)) + '</b>' : '') + '</div><div class="menge"><button type="button" data-a="minus" data-i="' + i + '" aria-label="weniger">−</button>' +
     '<input type="text" inputmode="numeric" value="' + p.menge + '" data-a="set" data-i="' + i + '" aria-label="Menge">' +
     '<button type="button" data-a="plus" data-i="' + i + '" aria-label="mehr">+</button><button type="button" class="weg" data-a="del" data-i="' + i + '" aria-label="entfernen">✕</button></div></div>').join('');
   const stk = POS.reduce((a, p) => a + p.menge, 0);
@@ -228,12 +229,13 @@ async function baueBlatt() {
     d.text('Pos', M + 2, y); d.text('Artikelnummer', M + 14, y); d.text('Menge', M + 68, y, { align: 'right' }); d.text('Bezeichnung', M + 74, y); d.text('Foto', W - M - 2, y, { align: 'right' }); y += 7; };
   spalten();
   POS.forEach((p, i) => {
-    const z = d.splitTextToSize(latin(p.text), 84), foto = FOTOS[i], h = Math.max(7, 4.6 * z.length + 2.6, foto ? 17 : 0);
+    const z = d.splitTextToSize(latin(p.text), 84), hin = hinOf(p), zh = hin ? d.splitTextToSize(latin(hin), 84) : [], foto = FOTOS[i], h = Math.max(7, 4.6 * (z.length + zh.length) + 2.6, foto ? 17 : 0);
     if (y + h > 280) { d.addPage(); y = M + 6; spalten(); }
     d.setFont('helvetica', 'bold'); d.setFontSize(11); d.setTextColor(p.unbekannt ? 180 : 0, p.unbekannt ? 90 : 0, 0);
     d.text(String(i + 1), M + 2, y); d.text(latin(p.mat), M + 14, y);
     d.setFont('helvetica', 'bold'); d.setFontSize(12.5); d.text(String(p.menge), M + 68, y, { align: 'right' });
     d.setFont('helvetica', 'normal'); d.setFontSize(9.5); d.setTextColor(p.unbekannt ? 180 : 0, p.unbekannt ? 90 : 0, 0); d.text(z, M + 74, y); d.setTextColor(0);
+    if (zh.length) { d.setFont('helvetica', 'bold'); d.setFontSize(9); d.setTextColor(0, 68, 204); d.text(zh, M + 74, y + 4.6 * z.length); d.setTextColor(0); }
     if (foto) { const bx = 15, sc = Math.min(bx / foto.w, bx / foto.h), iw = foto.w * sc, ih = foto.h * sc; d.addImage(foto.url, 'JPEG', W - M - bx + (bx - iw) / 2, y - 4.5 + (bx - ih) / 2, iw, ih); }
     d.setDrawColor(210); d.setLineWidth(0.2); d.line(M, y + h - 4.4, W - M, y + h - 4.4); y += h;
   });
