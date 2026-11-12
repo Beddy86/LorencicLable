@@ -616,7 +616,9 @@ function drawSammelPage(cv, group, im, W, H, pageNo, pages, rowsHere, firstRow, 
     const put = links ? (t, y) => cv.strR(t, tx, y) : (t, y) => cv.str(t, tx, y);
     const ns = fitFont(cv, mat, 'B', 20 * s, avail, 10 * s);
     cv.ink(0); cv.font('B', ns); put(kuerzen(mat, 'B', ns, avail), yb + rowH / 2 + 1.5 * MM * s);
-    if (diffs[i]) { cv.font('R', 10 * s); put(kuerzen(diffs[i], 'R', 10 * s, avail), yb + rowH / 2 - 5 * MM * s); }
+    const mg = group[i].menge;
+    if (mg) { cv.font('B', 13 * s); put(kuerzen((diffs[i] ? diffs[i] + '  |  ' : '') + 'Menge: ' + mg + ' Stk', 'B', 13 * s, avail), yb + rowH / 2 - 6.5 * MM * s); }
+    else if (diffs[i]) { cv.font('R', 10 * s); put(kuerzen(diffs[i], 'R', 10 * s, avail), yb + rowH / 2 - 5 * MM * s); }
   }
 }
 async function baueSammel(groups, rahmen, a3) {
@@ -645,7 +647,7 @@ function parseTokens(text) {
     if (m) { tok = m[1]; n = Math.min(+m[2], 500); }
     const at = tok.indexOf('@');
     if (at >= 0) { platz = tok.slice(at + 1); tok = tok.slice(0, at); }
-    out.push([tok, n, platz]);
+    out.push([tok, n, platz, !!m]);
   }
   return out;
 }
@@ -700,7 +702,7 @@ async function erstellen() {
       for (const line of $('art').value.split(/\r?\n/)) {
         const toks = parseTokens(line); if (!toks.length) continue;
         const items = [];
-        for (const [t, , p] of toks) { const a = artikel(t, p); if (a) items.push(a); else fehlend.push(t); }
+        for (const [t, n, p, expl] of toks) { const a = artikel(t, p); if (a) { if (expl) a.menge = n; items.push(a); } else fehlend.push(t); }
         if (items.length) groups.push({ items });
       }
       if (!groups.length) { $('res').innerHTML = '<div class="karte fehler"><b>Keine gültigen Artikel gefunden.</b>' + (fehlend.length ? '<p>Nicht in der Liste:</p>' + liste(fehlend) : '') + '</div>'; return; }
