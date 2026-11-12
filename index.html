@@ -113,6 +113,7 @@
         <select id="art_typ">
           <option value="einzel" selected>Einzeletiketten</option>
           <option value="sammel">Sammeletikett (A4, Zeile = Blatt)</option>
+          <option value="sammel3">Sammeletikett (A3, Barcode in Originalgröße)</option>
         </select></label>
       <label class="feld" hidden>Seitenlayout
         <select id="a4">
@@ -556,6 +557,11 @@ async function baueEinzel(items, fmt, optA4, rahmen) {
 function splitGroups(group) {
   const segs = group.map(g => g.text.split(',').map(x => x.trim()));
   const common = group.length > 1 ? segs[0].filter(x => segs.slice(1).every(sg => sg.includes(x))) : segs[0];
+  if (group.length > 1 && !common.length) {      // Texte ohne Kommas (z. B. "Bundjacke … Gr. 46 VPE5"): Wörter vergleichen
+    const ws = group.map(g => g.text.split(/\s+/).filter(Boolean));
+    const cw = ws[0].filter(x => ws.slice(1).every(w => w.includes(x)));
+    if (cw.length) return [cw.join(' '), ws.map(w => w.filter(x => !cw.includes(x)).join(' '))];
+  }
   const diffs = segs.map(sg => sg.filter(x => !common.includes(x)).join(', '));
   return [common.join(', '), diffs];
 }
@@ -564,57 +570,57 @@ function commonPrefix(arr) {
   for (const s of arr) while (!s.startsWith(p)) p = p.slice(0, -1);
   return p;
 }
-function drawSammelPage(cv, group, im, W, H, pageNo, pages, rowsHere, firstRow, rahmen, inset) {
-  const M = 16 * MM, inner = W - 2 * M;
+function drawSammelPage(cv, group, im, W, H, pageNo, pages, rowsHere, firstRow, rahmen, inset, s = 1) {
+  const M = 16 * MM * s, inner = W - 2 * M;
   const mats = group.map(g => latin(g.mat));
   const prefix = mats.length > 1 ? commonPrefix(mats) : mats[0];
   const [beschr, diffs] = splitGroups(group.map(g => ({ text: latin(g.text) })));
   if (rahmen) { cv.stroke(0, 1); cv.rrect(inset, inset, W - 2 * inset, H - 2 * inset, 3 * MM); }
-  const top = H - M, headH = 78 * MM;
+  const top = H - M, headH = 78 * MM * s;
   let xTxt = M;
   if (im) {
     const bw = Math.min(inner * 0.42, headH * im.w / im.h), bb = Math.max(bw, inner * 0.25);
     drawImg(cv, im, M, top - headH, bb, headH);
-    xTxt = M + bb + 8 * MM;
+    xTxt = M + bb + 8 * MM * s;
   }
   const w = W - M - xTxt;
   const ptxt = prefix + (mats.length > 1 ? '...' : '');
-  const size = fitFont(cv, ptxt, 'B', 40, w, 14);
+  const size = fitFont(cv, ptxt, 'B', 40 * s, w, 14 * s);
   cv.ink(0); cv.font('B', size); cv.str(ptxt, xTxt, top - size * 0.8);
-  let ds = 17, lines = wrap(cv, beschr, 'R', ds, w);
-  while (lines.length > 6 && ds > 9) { ds -= 1; lines = wrap(cv, beschr, 'R', ds, w); }
+  let ds = 17 * s, lines = wrap(cv, beschr, 'R', ds, w);
+  while (lines.length > 6 && ds > 9 * s) { ds -= 1; lines = wrap(cv, beschr, 'R', ds, w); }
   cv.font('R', ds);
-  let y = top - size * 0.8 - 8 * MM - ds * 0.8;
+  let y = top - size * 0.8 - 8 * MM * s - ds * 0.8;
   for (const ln of lines) { cv.str(ln, xTxt, y); y -= ds * 1.2; }
-  if (pages > 1) { cv.font('R', 9); cv.strR('Seite ' + pageNo + '/' + pages, W - M, top - headH - 2 * MM); }
-  const yTop = top - headH - 6 * MM;
-  const rowH = Math.min(24 * MM, (yTop - M) / Math.max(rowsHere, 1));
+  if (pages > 1) { cv.font('R', 9 * s); cv.strR('Seite ' + pageNo + '/' + pages, W - M, top - headH - 2 * MM * s); }
+  const yTop = top - headH - 6 * MM * s;
+  const rowH = Math.min(24 * MM * s, (yTop - M) / Math.max(rowsHere, 1));
   cv.stroke(0.6, 0.4);
   const kuerzen = (t, fn, size, maxW) => {
     if (cv.sw(t, fn, size) <= maxW) return t;
     while (t.length > 1 && cv.sw(t + '...', fn, size) > maxW) t = t.slice(0, -1);
     return t.trimEnd() + '...';
   };
-  const gap = 6 * MM;
+  const gap = 6 * MM * s;
   for (let k = 0; k < rowsHere; k++) {
     const i = firstRow + k, yb = yTop - (k + 1) * rowH;
     cv.line(M, yb, W - M, yb);
     const mat = mats[i];
     const links = k % 2 === 1;                    // jede zweite Zeile: Barcode links, Text rechtsbündig
-    const bh = rowH * 0.62;
+    const bh = Math.min(rowH * 0.62, 14.9 * MM);   // Barcode-Höhe und Strichbreite (max. 1 mm) bleiben auch auf A3 in Originalgröße
     const bwm = Math.min(inner * 0.5 / barcodeModules(mat), 1.0 * MM);
     const bcw = barcodeModules(mat) * bwm;
     const avail = inner - bcw - gap;              // so viel Platz bleibt neben dem Barcode für den Text
     cv.barcode(mat, links ? M : W - M - bcw, yb + (rowH - bh) / 2, bwm, bh);
     const tx = links ? W - M : M;
     const put = links ? (t, y) => cv.strR(t, tx, y) : (t, y) => cv.str(t, tx, y);
-    const ns = fitFont(cv, mat, 'B', 20, avail, 10);
-    cv.ink(0); cv.font('B', ns); put(kuerzen(mat, 'B', ns, avail), yb + rowH / 2 + 1.5 * MM);
-    if (diffs[i]) { cv.font('R', 10); put(kuerzen(diffs[i], 'R', 10, avail), yb + rowH / 2 - 5 * MM); }
+    const ns = fitFont(cv, mat, 'B', 20 * s, avail, 10 * s);
+    cv.ink(0); cv.font('B', ns); put(kuerzen(mat, 'B', ns, avail), yb + rowH / 2 + 1.5 * MM * s);
+    if (diffs[i]) { cv.font('R', 10 * s); put(kuerzen(diffs[i], 'R', 10 * s, avail), yb + rowH / 2 - 5 * MM * s); }
   }
 }
-async function baueSammel(groups, rahmen) {
-  const W = 210 * MM, H = 297 * MM, perPage = 9;
+async function baueSammel(groups, rahmen, a3) {
+  const s = a3 ? Math.SQRT2 : 1, W = (a3 ? 297 : 210) * MM, H = (a3 ? 420 : 297) * MM, perPage = a3 ? 8 : 9;
   const doc = neuesPdf(W, H), cv = new Cv(doc, H);
   let first = true;
   for (const g of groups) {
@@ -623,7 +629,7 @@ async function baueSammel(groups, rahmen) {
       if (!first) doc.addPage([W, H], 'p');
       first = false;
       const f = p * perPage;
-      drawSammelPage(cv, g.items, g.im, W, H, p + 1, pages, Math.min(perPage, g.items.length - f), f, rahmen, 8 * MM);
+      drawSammelPage(cv, g.items, g.im, W, H, p + 1, pages, Math.min(perPage, g.items.length - f), f, rahmen, 8 * MM * s, s);
     }
   }
   return doc.output('blob');
@@ -685,7 +691,7 @@ async function erstellen() {
     }
     SHOW_PLATZ = $('platz').value === '1'; SHOW_KATALOG = $('katalog').value === '1';
     const dr = parseFloat($('rand').value); DRUCKERRAND = isFinite(dr) ? dr : 6;
-    const rahmen = $('rahmen').value === '1', nurFoto = $('fotos').value === 'nur', sammel = $('art_typ').value === 'sammel';
+    const rahmen = $('rahmen').value === '1', nurFoto = $('fotos').value === 'nur', sammel = $('art_typ').value.startsWith('sammel');
     const fehlend = [], ohneFoto = [], uebersprungen = [];
     let blob, anzahl, name, gedruckt = [];
 
@@ -706,7 +712,7 @@ async function erstellen() {
       }
       stand('PDF wird erstellt …'); await new Promise(r => setTimeout(r, 30));
       gedruckt = alle;
-      blob = await baueSammel(groups, rahmen); anzahl = groups.length; name = 'Sammeletiketten';
+      blob = await baueSammel(groups, rahmen, $('art_typ').value === 'sammel3'); anzahl = groups.length; name = 'Sammeletiketten';
     } else {
       let items = [];
       for (const [t, n, p] of parseTokens($('art').value)) {
@@ -872,7 +878,7 @@ function scanTreffer(code) {
   SCAN.letzter = code; SCAN.letzteZeit = jetzt;
   const e = LOOKUP.get(code.toUpperCase()) || LOOKUP.get((EANMAP.get(eanNorm(code)) || '').toUpperCase());
   if (!e) { scanPiep(false); scanMeldung('<b>' + esc(code) + '</b><br>nicht in der Artikelliste', 'fehler'); return; }
-  const sammel = $('art_typ').value === 'sammel', ta = $('art'), mat = e[0];
+  const sammel = $('art_typ').value.startsWith('sammel'), ta = $('art'), mat = e[0];
   if (sammel && SCAN.zaehler.has(mat)) { scanPiep(false); scanMeldung('<b>' + esc(mat) + '</b> ist in diesem Sammeletikett schon dabei', 'fehler'); return; }
   const v = ta.value.replace(/\s+$/, '');
   let zusatz;
@@ -992,7 +998,7 @@ async function scanDetektorBasis() {
 }
 async function scanStart() {
   const ov = $('scan'), video = $('scanvideo');
-  SCAN.stack = []; SCAN.zaehler = new Map(); SCAN.letzter = ''; $('scangruppe').hidden = $('art_typ').value !== 'sammel';
+  SCAN.stack = []; SCAN.zaehler = new Map(); SCAN.letzter = ''; $('scangruppe').hidden = !$('art_typ').value.startsWith('sammel');
   ov.hidden = false; scanMeldung('Kamera wird gestartet …');
   try {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Kamera-Zugriff nicht möglich (nur über https oder in einem Browser mit Kamera).');
