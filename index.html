@@ -92,7 +92,7 @@
 <main>
   <section class="karte">
     <label class="titel" for="art">Artikelnummern (eine pro Zeile)</label>
-    <textarea id="art" placeholder="Z100&#10;Z5-1&#10;Z170000*3" autofocus spellcheck="false" autocapitalize="characters" autocomplete="off"></textarea>
+    <textarea id="art" data-ph="Z100&#10;Z5-1&#10;Z170000*3" placeholder="Z100&#10;Z5-1&#10;Z170000*3" autofocus spellcheck="false" autocapitalize="characters" autocomplete="off"></textarea>
     <div class="scanzeile"><button id="scanbtn" type="button">📷 Barcodes scannen</button>
       <span class="hinweis" style="margin:0">Etiketten, Regale oder Ware mit der Handykamera einlesen.</span></div>
     <p class="hinweis">Mehrere Etiketten für einen Artikel: <code>Z170000*3</code> = dreimal.
@@ -114,7 +114,8 @@
           <option value="einzel" selected>Einzeletiketten</option>
           <option value="sammel">Sammeletikett (A4, Zeile = Blatt)</option>
           <option value="sammel3">Sammeletikett (A3, Barcode in Originalgröße)</option>
-        </select></label>
+        </select>
+        <span class="muted" id="art_hint" style="font-size:13px;font-weight:400">*3 = 3 Etiketten desselben Artikels</span></label>
       <label class="feld" hidden>Seitenlayout
         <select id="a4">
           <option value="1" selected>Mehrere pro A4 (Schnittmarken)</option>
@@ -1101,4 +1102,11 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('scan')
 ladeDaten();
 </script>
 
+<script>
+$('art_typ').addEventListener('change', () => {
+  const sm = $('art_typ').value.startsWith('sammel');
+  $('art_hint').textContent = sm ? '*10 = Menge 10 Stk wird auf dem Sammeletikett angezeigt (keine Mehrfach-Etiketten)' : '*3 = 3 Etiketten desselben Artikels';
+  $('art').placeholder = sm ? 'Z100*10 Z101*5\nZ200*8 Z201' : $('art').dataset.ph;
+});
+</script>
 </body></html>
