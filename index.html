@@ -97,6 +97,10 @@
       <span class="hinweis" style="margin:0">Etiketten, Regale oder Ware mit der Handykamera einlesen.</span></div>
     <p class="hinweis">Mehrere Etiketten für einen Artikel: <code>Z170000*3</code> = dreimal.
       Trennen mit Zeilenumbruch, Leerzeichen oder Komma.</p>
+    <div id="snbox"><label class="titel" for="sn" style="margin-top:14px">Seriennummern (optional, nur Einzeletiketten)</label>
+      <textarea id="sn" style="min-height:70px" placeholder="SN1001&#10;SN1002&#10;SN1003" spellcheck="false" autocapitalize="characters" autocomplete="off"></textarea>
+      <p class="hinweis">Eine Seriennummer pro Zeile (oder mit Komma/Leerzeichen getrennt). Sie werden der Reihe nach auf die Etiketten gedruckt, als Text und Strichcode.
+        Bei nur einem Artikel ohne <code>*</code> entsteht automatisch ein Etikett je Seriennummer.</p></div>
     <div class="optionen">
       <label class="feld voll">Format
         <select id="fmt">
@@ -407,6 +411,17 @@ function regCustom(w, h) {
   } else if (h / w >= 1.2) HOCH.add('custom'); else GROSS.add('custom');
 }
 
+function drawSN(cv, a, x, y, w, barH, fs) {          // Seriennummer: Strichcode links, Text rechts daneben
+  if (!a.sn) return;
+  const modules = barcodeModules(a.sn);
+  const bw = Math.min(0.9 * MM, (w * 0.58) / modules);
+  const bcW = modules * bw;
+  cv.barcode(a.sn, x, y, bw, barH);
+  const tx = x + bcW + 3 * MM, avail = w - bcW - 3 * MM;
+  const label = /^s\/?n\b/i.test(a.sn) ? a.sn : 'SN ' + a.sn;
+  const size = fitFont(cv, label, 'B', fs, Math.max(avail, 10 * MM), 6);
+  cv.ink(0); cv.font('B', size); cv.str(label, tx, y + barH / 2 - size * 0.3);
+}
 function footerOf(a) {
   return [a.hinweis ? a.hinweis : (SHOW_PLATZ ? (a.platz || '') : ''), SHOW_KATALOG ? (a.kat || '') : ''];
 }
@@ -433,10 +448,12 @@ function drawBreit(cv, a, im, W, H, p) {
   cv.ink(0); cv.font('B', size); cv.str(material, x, base);
   const y0 = base - gap;
   let [platz, kat] = footerOf(a);
-  if ((platz || kat) && (y0 - M - p.platz * 1.5) < p.desc_min * 1.3) platz = kat = '';
+  if ((platz || kat) && (y0 - M - (a.sn ? 8 * MM : 0) - p.platz * 1.5) < p.desc_min * 1.3) platz = kat = '';
+  const snBarH = a.sn ? Math.max(6 * MM, 0.45 * p.bar_h * MM) : 0, snH = a.sn ? snBarH + 2 * MM : 0;
   const platH = (platz || kat) ? p.platz * 1.5 : 0;
-  const avail = y0 - M - platH;
-  if (platz || kat) drawPlatz(cv, platz, kat, x, M + p.platz * 0.15, p.platz, w);
+  const avail = y0 - M - platH - snH;
+  if (a.sn) drawSN(cv, a, x, M, w, snBarH, Math.max(9, p.num_min * 0.5));
+  if (platz || kat) drawPlatz(cv, platz, kat, x, M + snH + p.platz * 0.15, p.platz, w);
   let size2 = p.desc_max, lines = wrap(cv, a.text, 'R', size2, w);
   while ((lines.length > 3 || lines.length * size2 * 1.15 > avail) && size2 > p.desc_min) { size2 -= 1; lines = wrap(cv, a.text, 'R', size2, w); }
   lines = lines.slice(0, Math.max(0, Math.floor(avail / (size2 * 1.15))));
@@ -454,8 +471,10 @@ function drawHoch(cv, a, im, W, H) {
   const yNum = top - ns * 0.72 - 4 * MM;
   const barH = Math.max(8 * MM, 0.08 * H);
   const bw = Math.min(inner / barcodeModules(material), 1.0 * MM);
-  cv.barcode(material, M, M, bw, barH);
-  let y = M + barH + 3 * MM;
+  const snBarH = a.sn ? Math.max(6 * MM, 0.6 * barH) : 0, snH = a.sn ? snBarH + 3 * MM : 0;
+  if (a.sn) drawSN(cv, a, M, M, inner, snBarH, Math.max(8, 0.045 * W));
+  cv.barcode(material, M, M + snH, bw, barH);
+  let y = M + snH + barH + 3 * MM;
   const [platz, kat] = footerOf(a);
   if (platz || kat) { const ps = Math.max(7, 0.05 * W); drawPlatz(cv, platz, kat, M, y, ps, inner); y += ps * 1.6; }
   let ds = Math.max(8, 0.06 * W), lines = wrap(cv, a.text, 'R', ds, inner);
@@ -484,11 +503,13 @@ function drawGross(cv, a, im, W, H) {
   const w = W - M - xRight;
   const barH = 16 * MM * k;
   const bw = Math.min(w / barcodeModules(material), 1.0 * MM);
-  cv.barcode(material, xRight, zoneBot, bw, barH);
+  const snBarH = a.sn ? 12 * MM * k : 0, snH = a.sn ? snBarH + 5 * MM * k : 0;
+  if (a.sn) drawSN(cv, a, xRight, zoneBot, w, snBarH, 34 * k);
+  cv.barcode(material, xRight, zoneBot + snH, bw, barH);
   const y0 = zoneTop, [platz, kat] = footerOf(a);
   const ps = 44 * k, platH = (platz || kat) ? ps * 1.5 : 0;
-  if (platz || kat) drawPlatz(cv, platz, kat, xRight, zoneBot + barH + 5 * MM * k, ps, w);
-  const avail = y0 - (zoneBot + barH + 6 * MM * k + platH);
+  if (platz || kat) drawPlatz(cv, platz, kat, xRight, zoneBot + snH + barH + 5 * MM * k, ps, w);
+  const avail = y0 - (zoneBot + snH + barH + 6 * MM * k + platH);
   size = 40 * k;
   let lines = wrap(cv, a.text, 'R', size, w);
   while ((lines.length > 5 || lines.length * size * 1.15 > avail) && size > 10) { size -= 1; lines = wrap(cv, a.text, 'R', size, w); }
@@ -548,7 +569,7 @@ async function baueEinzel(items, fmt, optA4, rahmen) {
     cv.ox = ox; cv.oy = oy;
     if (it.hinweis) { const o = Math.min(inset, 1.0 * MM); cv.stroke([0, 0.27, 0.8], 4); cv.rrect(o, o, Wl - 2 * o, H - 2 * o, 2 * MM); }   // dicker blauer Rahmen
     else if (rahmen) { cv.stroke(0, 1); cv.rrect(inset, inset, Wl - 2 * inset, H - 2 * inset, 2 * MM); }
-    const a = { mat: latin(it.mat), text: latin(it.text), platz: latin(it.platz || ''), kat: latin(it.kat || ''), hinweis: latin(it.hinweis || '') };
+    const a = { mat: latin(it.mat), text: latin(it.text), platz: latin(it.platz || ''), kat: latin(it.kat || ''), hinweis: latin(it.hinweis || ''), sn: latin(it.sn || '') };
     drawLabel(cv, a, it.im, Wl, H, fmt);
   }
   return doc.output('blob');
@@ -696,6 +717,7 @@ async function erstellen() {
     const dr = parseFloat($('rand').value); DRUCKERRAND = isFinite(dr) ? dr : 6;
     const rahmen = $('rahmen').value === '1', nurFoto = $('fotos').value === 'nur', sammel = $('art_typ').value.startsWith('sammel');
     const fehlend = [], ohneFoto = [], uebersprungen = [];
+    let snUebrig = 0;
     let blob, anzahl, name, gedruckt = [];
 
     if (sammel) {
@@ -718,11 +740,16 @@ async function erstellen() {
       blob = await baueSammel(groups, rahmen, $('art_typ').value === 'sammel3'); anzahl = groups.length; name = 'Sammeletiketten';
     } else {
       let items = [];
-      for (const [t, n, p] of parseTokens($('art').value)) {
+      const sns = $('sn').value.split(/[\s,;]+/).filter(Boolean);
+      const toks = parseTokens($('art').value);
+      for (const [t, n0, p, expl] of toks) {
         const a = artikel(t, p);
         if (!a) { fehlend.push(t); continue; }
+        const n = (sns.length > 1 && toks.length === 1 && !expl) ? Math.min(sns.length, 500) : n0;
         for (let i = 0; i < n; i++) items.push({ ...a });
       }
+      items.forEach((it, i) => { if (sns[i]) it.sn = sns[i]; });
+      if (sns.length > items.length) snUebrig = sns.length - items.length;
       if (!items.length) { $('res').innerHTML = '<div class="karte fehler"><b>Keine gültigen Artikel gefunden.</b>' + (fehlend.length ? '<p>Nicht in der Liste:</p>' + liste(fehlend) : '') + '</div>'; return; }
       if (nurFoto) {
         const keep = []; const skipped = new Set();
@@ -738,16 +765,17 @@ async function erstellen() {
     }
     const d = new Date(), z = n => String(n).padStart(2, '0');
     letztesPdf = { blob, name: name + '_' + d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + '_' + z(d.getHours()) + z(d.getMinutes()) + '.pdf' };
-    zeige(anzahl, sammel, fehlend, ohneFoto, uebersprungen, blob.size, gedruckt);
+    zeige(anzahl, sammel, fehlend, ohneFoto, uebersprungen, blob.size, gedruckt, snUebrig);
   } catch (e) {
     $('res').innerHTML = '<div class="karte fehler"><b>Fehler:</b> ' + esc(e && e.message || e) + '</div>';
   } finally { btn.disabled = false; }
 }
 
-function zeige(anzahl, sammel, fehlend, ohneFoto, uebersprungen, groesse, gedruckt = []) {
+function zeige(anzahl, sammel, fehlend, ohneFoto, uebersprungen, groesse, gedruckt = [], snUebrig = 0) {
   let h = '<div class="karte ok"><b>' + anzahl + (sammel ? ' Sammeletikett' + (anzahl === 1 ? '' : 'en') : ' Etikett' + (anzahl === 1 ? '' : 'en')) +
     ' erstellt</b> <span class="muted">(' + (groesse / 1048576).toFixed(1).replace('.', ',') + ' MB)</span><br>' +
     '<button id="speichern" class="gruen" type="button">PDF speichern</button><div class="hinweis" id="spinfo"></div></div>';
+  if (snUebrig) h += '<div class="karte warn"><b>' + snUebrig + ' Seriennummer' + (snUebrig === 1 ? '' : 'n') + ' ohne Etikett:</b> Es gibt weniger Etiketten als Seriennummern (mit <code>*N</code> mehr Etiketten anfordern).</div>';
   if (fehlend.length) h += '<div class="karte warn"><b>Nicht in der Liste (übersprungen):</b>' + liste(fehlend) + '</div>';
   if (uebersprungen.length) h += '<div class="karte warn"><b>Ohne Foto übersprungen (nicht gedruckt):</b>' + liste(uebersprungen) + '</div>';
   if (ohneFoto.length) {
@@ -1106,6 +1134,7 @@ ladeDaten();
 $('art_typ').addEventListener('change', () => {
   const sm = $('art_typ').value.startsWith('sammel');
   $('art_hint').textContent = sm ? '*10 = Menge 10 Stk wird auf dem Sammeletikett angezeigt (keine Mehrfach-Etiketten)' : '*3 = 3 Etiketten desselben Artikels';
+  $('snbox').hidden = sm;
   $('art').placeholder = sm ? 'Z100*10 Z101*5\nZ200*8 Z201' : $('art').dataset.ph;
 });
 </script>
