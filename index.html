@@ -101,6 +101,9 @@
       <textarea id="sn" style="min-height:70px" placeholder="SN1001&#10;SN1002&#10;SN1003" spellcheck="false" autocapitalize="characters" autocomplete="off"></textarea>
       <p class="hinweis">Eine Seriennummer pro Zeile (oder mit Komma/Leerzeichen getrennt). Sie werden der Reihe nach auf die Etiketten gedruckt, als Text und Strichcode.
         Bei nur einem Artikel ohne <code>*</code> entsteht automatisch ein Etikett je Seriennummer.</p></div>
+    <div id="exbox"><label class="titel" for="zusatz" style="margin-top:14px">Zusatztext auf jedem Etikett (optional, nur Einzeletiketten)</label>
+      <input id="zusatz" type="text" maxlength="120" placeholder="z. B. Prüfung 11/2026 oder Eigentum Lorencic" spellcheck="false" autocomplete="off" style="width:100%;font:17px/1.4 system-ui,sans-serif;padding:10px 12px;border:1px solid var(--linie);border-radius:10px">
+      <p class="hinweis">Wird fett unten auf jedes Etikett gedruckt (bis zu 3 Zeilen, bei Platzmangel wird die Beschreibung kleiner).</p></div>
     <div class="optionen">
       <label class="feld voll">Format
         <select id="fmt">
@@ -411,6 +414,14 @@ function regCustom(w, h) {
   } else if (h / w >= 1.2) HOCH.add('custom'); else GROSS.add('custom');
 }
 
+let EX_CUT = false;
+function exLines(cv, a, w, size) { return a.extra ? wrap(cv, a.extra, 'B', size, w).slice(0, 3) : []; }
+function drawExtra(cv, lines, x, y, size) {
+  if (!lines.length) return;
+  cv.ink(0); cv.font('B', size);
+  let yy = y + (lines.length - 1) * size * 1.15 + size * 0.25;
+  for (const ln of lines) { cv.str(ln, x, yy); yy -= size * 1.15; }
+}
 function drawSN(cv, a, x, y, w, barH, fs) {          // Seriennummer: Strichcode links, Text rechts daneben
   if (!a.sn) return;
   const modules = barcodeModules(a.sn);
@@ -448,12 +459,21 @@ function drawBreit(cv, a, im, W, H, p) {
   cv.ink(0); cv.font('B', size); cv.str(material, x, base);
   const y0 = base - gap;
   let [platz, kat] = footerOf(a);
-  if ((platz || kat) && (y0 - M - (a.sn ? 8 * MM : 0) - p.platz * 1.5) < p.desc_min * 1.3) platz = kat = '';
+  if ((platz || kat) && (y0 - M - (a.sn ? 8 * MM : 0) - (a.extra ? 6 * MM : 0) - p.platz * 1.5) < p.desc_min * 1.3) platz = kat = '';
   const snBarH = a.sn ? Math.max(6 * MM, 0.45 * p.bar_h * MM) : 0, snH = a.sn ? snBarH + 2 * MM : 0;
   const platH = (platz || kat) ? p.platz * 1.5 : 0;
-  const avail = y0 - M - platH - snH;
+  let exSize = Math.min(Math.max(8, p.desc_max), 13), exL = exLines(cv, a, w, exSize);
+  const room = y0 - M - snH - platH - 1 * MM;            // so viel Platz ist unter der Artikelnummer frei
+  const hOf = () => exL.length ? exL.length * exSize * 1.15 + 1.5 * MM : 0;
+  while (exL.length && hOf() > room && exSize > 6) { exSize -= 0.5; exL = exLines(cv, a, w, exSize); }
+  while (exL.length > 1 && hOf() > room) exL.pop();
+  if (exL.length && hOf() > room) exL = [];
+  if (a.extra && exLines(cv, a, w, exSize).length > exL.length) EX_CUT = true;
+  const exH = hOf();
+  const avail = y0 - M - platH - snH - exH;
   if (a.sn) drawSN(cv, a, x, M, w, snBarH, Math.max(9, p.num_min * 0.5));
-  if (platz || kat) drawPlatz(cv, platz, kat, x, M + snH + p.platz * 0.15, p.platz, w);
+  drawExtra(cv, exL, x, M + snH, exSize);
+  if (platz || kat) drawPlatz(cv, platz, kat, x, M + snH + exH + p.platz * 0.15, p.platz, w);
   let size2 = p.desc_max, lines = wrap(cv, a.text, 'R', size2, w);
   while ((lines.length > 3 || lines.length * size2 * 1.15 > avail) && size2 > p.desc_min) { size2 -= 1; lines = wrap(cv, a.text, 'R', size2, w); }
   lines = lines.slice(0, Math.max(0, Math.floor(avail / (size2 * 1.15))));
@@ -473,8 +493,10 @@ function drawHoch(cv, a, im, W, H) {
   const bw = Math.min(inner / barcodeModules(material), 1.0 * MM);
   const snBarH = a.sn ? Math.max(6 * MM, 0.6 * barH) : 0, snH = a.sn ? snBarH + 3 * MM : 0;
   if (a.sn) drawSN(cv, a, M, M, inner, snBarH, Math.max(8, 0.045 * W));
-  cv.barcode(material, M, M + snH, bw, barH);
-  let y = M + snH + barH + 3 * MM;
+  const exSize = Math.max(8, 0.05 * W), exL = exLines(cv, a, inner, exSize), exH = exL.length ? exL.length * exSize * 1.15 + 2 * MM : 0;
+  drawExtra(cv, exL, M, M + snH, exSize);
+  cv.barcode(material, M, M + snH + exH, bw, barH);
+  let y = M + snH + exH + barH + 3 * MM;
   const [platz, kat] = footerOf(a);
   if (platz || kat) { const ps = Math.max(7, 0.05 * W); drawPlatz(cv, platz, kat, M, y, ps, inner); y += ps * 1.6; }
   let ds = Math.max(8, 0.06 * W), lines = wrap(cv, a.text, 'R', ds, inner);
@@ -503,8 +525,11 @@ function drawGross(cv, a, im, W, H) {
   const w = W - M - xRight;
   const barH = 16 * MM * k;
   const bw = Math.min(w / barcodeModules(material), 1.0 * MM);
-  const snBarH = a.sn ? 12 * MM * k : 0, snH = a.sn ? snBarH + 5 * MM * k : 0;
+  const snBarH = a.sn ? 12 * MM * k : 0; let snH = a.sn ? snBarH + 5 * MM * k : 0;
   if (a.sn) drawSN(cv, a, xRight, zoneBot, w, snBarH, 34 * k);
+  const exSize = 30 * k, exL = exLines(cv, a, w, exSize), exH = exL.length ? exL.length * exSize * 1.15 + 4 * MM * k : 0;
+  drawExtra(cv, exL, xRight, zoneBot + snH, exSize);
+  const snH0 = snH; snH += exH;
   cv.barcode(material, xRight, zoneBot + snH, bw, barH);
   const y0 = zoneTop, [platz, kat] = footerOf(a);
   const ps = 44 * k, platH = (platz || kat) ? ps * 1.5 : 0;
@@ -569,7 +594,7 @@ async function baueEinzel(items, fmt, optA4, rahmen) {
     cv.ox = ox; cv.oy = oy;
     if (it.hinweis) { const o = Math.min(inset, 1.0 * MM); cv.stroke([0, 0.27, 0.8], 4); cv.rrect(o, o, Wl - 2 * o, H - 2 * o, 2 * MM); }   // dicker blauer Rahmen
     else if (rahmen) { cv.stroke(0, 1); cv.rrect(inset, inset, Wl - 2 * inset, H - 2 * inset, 2 * MM); }
-    const a = { mat: latin(it.mat), text: latin(it.text), platz: latin(it.platz || ''), kat: latin(it.kat || ''), hinweis: latin(it.hinweis || ''), sn: latin(it.sn || '') };
+    const a = { mat: latin(it.mat), text: latin(it.text), platz: latin(it.platz || ''), kat: latin(it.kat || ''), hinweis: latin(it.hinweis || ''), sn: latin(it.sn || ''), extra: latin(it.extra || '') };
     drawLabel(cv, a, it.im, Wl, H, fmt);
   }
   return doc.output('blob');
@@ -748,7 +773,8 @@ async function erstellen() {
         const n = (sns.length > 1 && toks.length === 1 && !expl) ? Math.min(sns.length, 500) : n0;
         for (let i = 0; i < n; i++) items.push({ ...a });
       }
-      items.forEach((it, i) => { if (sns[i]) it.sn = sns[i]; });
+      const zus = $('zusatz').value.trim();
+      items.forEach((it, i) => { if (sns[i]) it.sn = sns[i]; if (zus) it.extra = zus; });
       if (sns.length > items.length) snUebrig = sns.length - items.length;
       if (!items.length) { $('res').innerHTML = '<div class="karte fehler"><b>Keine gültigen Artikel gefunden.</b>' + (fehlend.length ? '<p>Nicht in der Liste:</p>' + liste(fehlend) : '') + '</div>'; return; }
       if (nurFoto) {
@@ -761,20 +787,22 @@ async function erstellen() {
       ohneFoto.push(...new Set(items.filter(i => !i.im).map(i => i.mat)));
       stand('PDF wird erstellt …'); await new Promise(r => setTimeout(r, 30));
       gedruckt = items;
+      EX_CUT = false;
       blob = await baueEinzel(items, fmt, $('a4').value === '1', rahmen); anzahl = items.length; name = 'Etiketten';
     }
     const d = new Date(), z = n => String(n).padStart(2, '0');
     letztesPdf = { blob, name: name + '_' + d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + '_' + z(d.getHours()) + z(d.getMinutes()) + '.pdf' };
-    zeige(anzahl, sammel, fehlend, ohneFoto, uebersprungen, blob.size, gedruckt, snUebrig);
+    zeige(anzahl, sammel, fehlend, ohneFoto, uebersprungen, blob.size, gedruckt, snUebrig, !sammel && EX_CUT);
   } catch (e) {
     $('res').innerHTML = '<div class="karte fehler"><b>Fehler:</b> ' + esc(e && e.message || e) + '</div>';
   } finally { btn.disabled = false; }
 }
 
-function zeige(anzahl, sammel, fehlend, ohneFoto, uebersprungen, groesse, gedruckt = [], snUebrig = 0) {
+function zeige(anzahl, sammel, fehlend, ohneFoto, uebersprungen, groesse, gedruckt = [], snUebrig = 0, exCut = false) {
   let h = '<div class="karte ok"><b>' + anzahl + (sammel ? ' Sammeletikett' + (anzahl === 1 ? '' : 'en') : ' Etikett' + (anzahl === 1 ? '' : 'en')) +
     ' erstellt</b> <span class="muted">(' + (groesse / 1048576).toFixed(1).replace('.', ',') + ' MB)</span><br>' +
     '<button id="speichern" class="gruen" type="button">PDF speichern</button><div class="hinweis" id="spinfo"></div></div>';
+  if (exCut) h += '<div class="karte warn"><b>Zusatztext gekürzt oder weggelassen:</b> Auf diesem Etikettenformat ist dafür zu wenig Platz. Kürzer formulieren oder ein größeres Format wählen.</div>';
   if (snUebrig) h += '<div class="karte warn"><b>' + snUebrig + ' Seriennummer' + (snUebrig === 1 ? '' : 'n') + ' ohne Etikett:</b> Es gibt weniger Etiketten als Seriennummern (mit <code>*N</code> mehr Etiketten anfordern).</div>';
   if (fehlend.length) h += '<div class="karte warn"><b>Nicht in der Liste (übersprungen):</b>' + liste(fehlend) + '</div>';
   if (uebersprungen.length) h += '<div class="karte warn"><b>Ohne Foto übersprungen (nicht gedruckt):</b>' + liste(uebersprungen) + '</div>';
@@ -1134,7 +1162,7 @@ ladeDaten();
 $('art_typ').addEventListener('change', () => {
   const sm = $('art_typ').value.startsWith('sammel');
   $('art_hint').textContent = sm ? '*10 = Menge 10 Stk wird auf dem Sammeletikett angezeigt (keine Mehrfach-Etiketten)' : '*3 = 3 Etiketten desselben Artikels';
-  $('snbox').hidden = sm;
+  $('snbox').hidden = sm; $('exbox').hidden = sm;
   $('art').placeholder = sm ? 'Z100*10 Z101*5\nZ200*8 Z201' : $('art').dataset.ph;
 });
 </script>
