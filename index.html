@@ -264,7 +264,21 @@ async function bildVorbereiten(blob) {
   if (x1 < 0) { x0 = 0; y0 = 0; x1 = w - 1; y1 = h - 1; }
   const cw = x1 - x0 + 1, chh = y1 - y0 + 1;
   const o = document.createElement('canvas'); o.width = cw; o.height = chh;
-  o.getContext('2d').drawImage(c, x0, y0, cw, chh, 0, 0, cw, chh);
+  const og = o.getContext('2d', { willReadFrequently: true });
+  og.drawImage(c, x0, y0, cw, chh, 0, 0, cw, chh);
+  /* weißer Hintergrund -> mittelhellgrau, damit weiße Produkte (Shirts, Geräte) sich abheben:
+     nur Weiß, das vom Bildrand aus zusammenhängt, wird ersetzt */
+  const id = og.getImageData(0, 0, cw, chh), p = id.data, seen = new Uint8Array(cw * chh), st = [];
+  const weiss = k => p[k * 4] >= 248 && p[k * 4 + 1] >= 248 && p[k * 4 + 2] >= 248;
+  const push = k => { if (!seen[k] && weiss(k)) { seen[k] = 1; st.push(k); } };
+  for (let x = 0; x < cw; x++) { push(x); push((chh - 1) * cw + x); }
+  for (let y = 0; y < chh; y++) { push(y * cw); push(y * cw + cw - 1); }
+  while (st.length) {
+    const k = st.pop(), x = k % cw, y = (k - x) / cw;
+    p[k * 4] = p[k * 4 + 1] = p[k * 4 + 2] = 208;
+    if (x > 0) push(k - 1); if (x < cw - 1) push(k + 1); if (y > 0) push(k - cw); if (y < chh - 1) push(k + cw);
+  }
+  og.putImageData(id, 0, 0);
   return { url: o.toDataURL('image/jpeg', 0.9), w: cw, h: chh };
 }
 
