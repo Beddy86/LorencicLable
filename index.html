@@ -564,8 +564,13 @@ function drawLabel(cv, a, im, W, H, fmt) {
   else drawBreit(cv, a, im, W, H, PARAMS[fmt] || PARAMS['165x63']);
 }
 
-function cropMarks(cv, x0, y0, cw, ch, cols, rows) {
+function cropMarks(cv, x0, y0, cw, ch, cols, rows, durchgehend, PW, PH) {
   cv.stroke(0.35, 0.3);
+  if (durchgehend) {                      /* Eigene Größe: Schnittlinien über die ganze Seite */
+    for (let k = 0; k <= rows; k++) { const y = y0 + k * ch; cv.line(0, y, PW, y); }
+    for (let k = 0; k <= cols; k++) { const x = x0 + k * cw; cv.line(x, 0, x, PH); }
+    return;
+  }
   const gx0 = x0, gx1 = x0 + cols * cw, gy0 = y0, gy1 = y0 + rows * ch;
   for (let k = 0; k <= rows; k++) { const y = gy0 + k * ch; cv.line(gx0 - 8 * MM, y, gx0 - 2 * MM, y); cv.line(gx1 + 2 * MM, y, gx1 + 8 * MM, y); }
   for (let k = 0; k <= cols; k++) { const x = gx0 + k * cw; cv.line(x, gy1 + 2 * MM, x, gy1 + 8 * MM); cv.line(x, gy0 - 8 * MM, x, gy0 - 2 * MM); }
@@ -596,7 +601,7 @@ async function baueEinzel(items, fmt, optA4, rahmen) {
     const it = items[i], pos = i % perPage;
     if (i > 0 && pos === 0) doc.addPage([PW, PH], PW > PH ? 'l' : 'p');
     cv.ox = 0; cv.oy = 0;
-    if (a4 && pos === 0 && !BOGEN.has(fmt)) cropMarks(cv, x0, y0, pw, ph, cols, rowsN);
+    if (a4 && pos === 0 && !BOGEN.has(fmt)) cropMarks(cv, x0, y0, pw, ph, cols, rowsN, fmt === 'custom', PW, PH);
     const r = Math.floor(pos / cols), col = pos % cols;
     let ox = x0 + col * pw; const oy = y0 + (rowsN - 1 - r) * ph;
     let Wl = W;
